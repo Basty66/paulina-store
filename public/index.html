@@ -3,520 +3,651 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paulina Store - Códigos de Barras</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%2300ff88' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='%23000' font-family='Arial' font-weight='bold'>PS</text></svg>">
+    <title>Paulina Store</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%2310b981' width='100' height='100' rx='20'/><text x='50' y='68' font-size='48' text-anchor='middle' fill='white' font-family='system-ui' font-weight='700'>PS</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
+        :root {
+            --bg-primary: #09090b;
+            --bg-card: #18181b;
+            --bg-elevated: #27272a;
+            --bg-hover: #3f3f46;
+            --border: #3f3f46;
+            --border-light: #52525b;
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent: #10b981;
+            --accent-hover: #059669;
+            --accent-bg: rgba(16,185,129,0.1);
+            --danger: #ef4444;
+            --danger-bg: rgba(239,68,68,0.1);
+            --warning: #f59e0b;
+            --info: #6366f1;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.5);
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f0f23; color: #fff; min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 15px; }
-        header { text-align: center; padding: 15px 0; border-bottom: 3px solid #00ff88; margin-bottom: 20px; }
-        header h1 { font-size: 1.8rem; color: #00ff88; }
-        header p { color: #888; font-size: 0.9rem; margin-top: 5px; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-        .tabs { display: flex; gap: 8px; margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
-        .tab-btn { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; background: #2a2a4a; color: #fff; border: 2px solid #444; white-space: nowrap; flex-shrink: 0; }
-        .tab-btn.active { background: #00ff88; color: #000; border-color: #00ff88; }
+        .app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; padding-bottom: 80px; }
+        @media (min-width: 768px) { .app { max-width: 900px; } }
+        @media (min-width: 1024px) { .app { max-width: 1100px; } }
 
-        .tab-content { display: none; background: rgba(255,255,255,0.03); border-radius: 15px; padding: 20px; border: 1px solid #333; }
-        .tab-content.active { display: block; }
+        /* Header */
+        .header { padding: 20px 16px 16px; border-bottom: 1px solid var(--border); }
+        .header-row { display: flex; align-items: center; gap: 12px; }
+        .header-logo { width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .header-logo svg { width: 22px; height: 22px; color: white; }
+        .header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
+        .header p { color: var(--text-muted); font-size: 0.8rem; margin-top: 2px; }
 
-        .card-title { font-size: 1.2rem; color: #00ff88; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #00ff88; }
+        /* Navigation */
+        .nav { display: flex; gap: 4px; padding: 12px 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .nav::-webkit-scrollbar { display: none; }
+        .nav-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 10px 16px; border: none; border-radius: 999px;
+            font-size: 0.8rem; font-weight: 600; font-family: inherit;
+            background: var(--bg-elevated); color: var(--text-secondary);
+            cursor: pointer; white-space: nowrap; transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .nav-btn svg { width: 16px; height: 16px; }
+        .nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .nav-btn.active:hover { background: var(--accent-hover); }
 
-        .form-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media (min-width: 600px) { .form-row { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 900px) { .form-row { grid-template-columns: repeat(4, 1fr); } }
+        /* Content */
+        .content { padding: 0 16px; }
+        .panel { display: none; }
+        .panel.active { display: block; }
 
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 4px; color: #00ff88; font-size: 0.8rem; font-weight: 600; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 2px solid #333; border-radius: 8px; font-size: 0.95rem; background: #1a1a3e; color: #fff; }
-        .form-group input:focus, .form-group select:focus { outline: none; border-color: #00ff88; }
-        .form-group input.scanned { border-color: #00ff88; background: rgba(0, 255, 136, 0.1); }
+        .section-title {
+            font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;
+            padding-bottom: 12px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .section-title svg { width: 20px; height: 20px; color: var(--accent); }
 
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.9rem; cursor: pointer; font-weight: 600; width: 100%; }
-        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-row .btn { flex: 1; }
-        .btn-primary { background: #00ff88; color: #000; }
-        .btn-danger { background: #ff4444; color: #fff; }
-        .btn-print { background: #4488ff; color: #fff; }
-        .btn-info { background: #9b59b6; color: #fff; }
+        /* Cards */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 20px; margin-bottom: 16px;
+        }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .card-title { font-size: 0.95rem; font-weight: 600; }
 
-        /* Scanner */
-        .scanner-area { max-width: 500px; margin: 0 auto; }
-        .scanner-box { background: #1a1a3e; border-radius: 15px; padding: 20px; border: 2px solid #00ff88; margin-bottom: 15px; text-align: center; }
-        .scanner-box h3 { color: #00ff88; margin-bottom: 15px; }
-        #reader { width: 100%; min-height: 250px; background: #000; border-radius: 10px; }
-        .camera-btns { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
+        /* Forms */
+        .form-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        @media (min-width: 600px) { .form-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 900px) { .form-grid { grid-template-columns: repeat(4, 1fr); } }
 
-        .scan-result { background: #1a1a3e; border: 2px solid #00ff88; border-radius: 10px; padding: 15px; margin-top: 15px; }
-        .scan-result h3 { color: #00ff88; margin-bottom: 10px; font-size: 1rem; }
-        .scan-field { background: #2a2a4a; padding: 12px; border-radius: 8px; margin-top: 10px; }
-        .scan-field-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px; }
-        .scan-field-value { color: #00ff88; font-size: 1.2rem; font-weight: 600; word-break: break-all; }
+        .field { margin-bottom: 0; }
+        .field label {
+            display: block; margin-bottom: 6px; font-size: 0.72rem;
+            font-weight: 600; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .field input, .field select {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 0.875rem; font-family: inherit;
+            background: var(--bg-elevated); color: var(--text-primary);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .field input:focus, .field select:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-bg);
+        }
+        .field input.scanned {
+            border-color: var(--accent); background: var(--accent-bg);
+        }
+        .field-scan { display: flex; gap: 6px; }
+        .field-scan input { flex: 1; }
 
-        .upload-area { background: #2a2a4a; border: 2px dashed #444; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; margin-top: 15px; }
-        .upload-area:hover { border-color: #00ff88; }
-        .upload-area p { color: #888; }
-        .upload-area input { display: none; }
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 10px 16px; border: none; border-radius: var(--radius-sm);
+            font-size: 0.85rem; font-weight: 600; font-family: inherit;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .btn svg { width: 16px; height: 16px; }
+        .btn-full { width: 100%; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+        .btn-outline:hover { background: var(--bg-elevated); color: var(--text-primary); }
+        .btn-icon {
+            width: 36px; height: 36px; padding: 0; border-radius: var(--radius-sm);
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            color: var(--text-secondary); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-icon svg { width: 18px; height: 18px; }
+        .btn-icon:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-icon.danger:hover { background: var(--danger); border-color: var(--danger); }
 
-        /* Progress tracking */
-        .progress-panel { background: #1a1a3e; border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 2px solid #333; }
-        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .progress-title { font-size: 1rem; color: #00ff88; font-weight: 600; }
-        .progress-count { font-size: 1.5rem; color: #00ff88; font-weight: bold; }
-        .progress-bar { width: 100%; height: 10px; background: #333; border-radius: 5px; overflow: hidden; margin-bottom: 15px; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #00ff88, #00cc6a); transition: width 0.3s; border-radius: 5px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 16px; }
+        .btn-group .btn { flex: 1; }
 
-        .fields-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        /* Stats */
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+        .stat {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 14px; text-align: center;
+        }
+        .stat-icon { margin-bottom: 6px; color: var(--accent); }
+        .stat-icon svg { width: 20px; height: 20px; }
+        .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); }
+        .stat-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
+        /* Product List */
+        .product-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 600px) { .product-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        .product-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 14px;
+            display: flex; align-items: center; gap: 12px;
+            transition: border-color 0.2s; cursor: pointer;
+        }
+        .product-card:hover { border-color: var(--accent); }
+        .product-card-body { flex: 1; min-width: 0; }
+        .product-card-name { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .product-card-code { font-size: 0.75rem; color: var(--text-muted); font-family: 'SF Mono', 'Fira Code', monospace; }
+        .product-card-price { font-size: 0.85rem; font-weight: 700; color: var(--accent); margin-top: 4px; }
+        .product-card-progress {
+            font-size: 0.7rem; font-weight: 600; margin-top: 4px;
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 8px; border-radius: 999px;
+        }
+        .product-card-progress.complete { background: var(--accent-bg); color: var(--accent); }
+        .product-card-progress.partial { background: var(--danger-bg); color: var(--danger); }
+        .product-card-actions { display: flex; flex-direction: column; gap: 4px; }
+
+        /* Progress */
+        .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .progress-label { font-size: 0.8rem; color: var(--text-secondary); }
+        .progress-count { font-size: 1.1rem; font-weight: 800; color: var(--accent); }
+        .progress-bar { width: 100%; height: 6px; background: var(--bg-elevated); border-radius: 999px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.4s ease; }
+
+        /* Fields Grid */
+        .fields-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 14px; }
         @media (min-width: 600px) { .fields-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (min-width: 900px) { .fields-grid { grid-template-columns: repeat(4, 1fr); } }
 
-        .field-item {
-            padding: 12px;
-            border-radius: 10px;
-            border: 2px solid #333;
-            background: #2a2a4a;
-            cursor: pointer;
-            transition: all 0.3s;
+        .field-chip {
+            padding: 10px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); background: var(--bg-card);
+            cursor: pointer; transition: all 0.2s;
         }
+        .field-chip:hover { border-color: var(--border-light); }
+        .field-chip.scanned { border-color: var(--accent); background: var(--accent-bg); }
+        .field-chip.pending { border-color: var(--danger); background: var(--danger-bg); }
+        .field-chip-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 3px; }
+        .field-chip-value { font-size: 0.8rem; font-weight: 600; word-break: break-all; }
+        .field-chip-status { font-size: 0.65rem; margin-top: 4px; font-weight: 600; }
+        .field-chip.scanned .field-chip-status { color: var(--accent); }
+        .field-chip.pending .field-chip-status { color: var(--danger); }
 
-        .field-item:hover { border-color: #00ff88; }
-
-        .field-item.scanned {
-            border-color: #00ff88;
-            background: rgba(0, 255, 136, 0.1);
-        }
-
-        .field-item.scanned .field-status { color: #00ff88; }
-        .field-item.scanned .field-name::after { content: " ✓"; color: #00ff88; }
-
-        .field-item.pending {
-            border-color: #ff4444;
-            background: rgba(255, 68, 68, 0.1);
-        }
-
-        .field-item.pending .field-status { color: #ff4444; }
-        .field-item.pending .field-name::after { content: " ✗"; color: #ff4444; }
-
-        .field-name { font-size: 0.75rem; color: #aaa; margin-bottom: 5px; text-transform: uppercase; }
-        .field-value { font-size: 0.85rem; color: #fff; word-break: break-all; }
-        .field-status { font-size: 0.7rem; margin-top: 5px; }
-
-        .summary-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #00ff88;
-            color: #000;
-            border: none;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.4);
-            z-index: 100;
-            display: none;
-        }
-
-        .summary-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 200;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .summary-modal.active { display: flex; }
-
-        .summary-content {
-            background: #1a1a3e;
-            padding: 25px;
-            border-radius: 15px;
-            max-width: 600px;
-            width: 95%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .summary-section { margin-bottom: 20px; }
-        .summary-section h4 { margin-bottom: 10px; font-size: 0.9rem; }
-        .summary-section.scanned h4 { color: #00ff88; }
-        .summary-section.pending h4 { color: #ff4444; }
-
-        .summary-item { padding: 8px; background: #2a2a4a; border-radius: 5px; margin-bottom: 5px; font-size: 0.85rem; }
-
-        .product-list { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 15px; }
-        @media (min-width: 600px) { .product-list { grid-template-columns: repeat(2, 1fr); } }
-
-        .product-item { background: #2a2a4a; border-radius: 10px; padding: 15px; border: 1px solid #444; display: flex; justify-content: space-between; align-items: center; }
-        .product-item > div:first-child { flex: 1; cursor: pointer; }
-        .product-item:hover { border-color: #00ff88; }
-        .product-item h4 { color: #00ff88; font-size: 0.95rem; margin-bottom: 5px; }
-        .product-item p { color: #888; font-size: 0.85rem; }
-        .product-actions { display: flex; gap: 8px; }
-        .product-actions button { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; border-radius: 5px; transition: background 0.2s; }
-        .product-actions button:hover { background: rgba(255,255,255,0.1); }
-        .btn-delete:hover { background: rgba(255,68,68,0.3) !important; }
-
-        .barcode-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-top: 15px; }
+        /* Barcodes */
+        .barcode-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
         @media (min-width: 600px) { .barcode-grid { grid-template-columns: repeat(2, 1fr); } }
 
-        .barcode-card { background: #fff; border-radius: 10px; padding: 15px; text-align: center; color: #000; border: 2px solid #00ff88; }
-        .barcode-card h4 { font-size: 0.75rem; color: #333; margin-bottom: 10px; text-transform: uppercase; }
+        .barcode-card {
+            background: white; border-radius: var(--radius); padding: 16px;
+            text-align: center; border: 1px solid var(--border);
+        }
+        .barcode-card-label {
+            font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;
+            letter-spacing: 0.05em; margin-bottom: 8px; font-weight: 600;
+        }
         .barcode-card svg { max-width: 100%; }
+        .barcode-card-value { font-size: 0.75rem; color: #666; margin-top: 6px; font-family: monospace; }
 
-        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-        .stat-box { background: #2a2a4a; padding: 12px; border-radius: 10px; text-align: center; border: 1px solid #00ff88; }
-        .stat-box h3 { font-size: 1.3rem; color: #00ff88; }
-        .stat-box p { color: #888; font-size: 0.75rem; }
-
-        .instructions { background: #2a2a4a; border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #00ff88; font-size: 0.85rem; }
-        .instructions h3 { color: #00ff88; margin-bottom: 8px; }
-        .instructions ol { color: #ccc; padding-left: 20px; }
-        .instructions li { margin-bottom: 5px; }
-
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
-        .modal.active { display: flex; }
-        .modal-content { background: #1a1a3e; padding: 20px; border-radius: 15px; max-width: 900px; width: 95%; max-height: 90vh; overflow-y: auto; }
-
-        .print-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        @media (min-width: 600px) { .print-grid { grid-template-columns: repeat(3, 1fr); } }
-
-        .print-item { background: #fff; padding: 10px; text-align: center; border-radius: 5px; }
-        .print-item h5 { font-size: 0.65rem; color: #333; margin-bottom: 5px; }
-        .print-item svg { max-width: 100%; }
-        .print-item .val { font-size: 0.6rem; color: #666; margin-top: 3px; }
-
-        .btn-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
-        .btn-group .btn { flex: 1; min-width: 120px; }
-
-        .btn-scan {
-            background: #00ff88;
-            color: #000;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            flex-shrink: 0;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Scanner Box */
+        .scanner-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; margin-bottom: 12px;
         }
+        .scanner-box-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+        .scanner-box-header h3 { font-size: 0.9rem; font-weight: 600; }
+        .scanner-box-header svg { width: 18px; height: 18px; color: var(--accent); }
+        #reader { width: 100%; min-height: 200px; background: #000; }
+        .scanner-box-footer { padding: 12px 16px; display: flex; gap: 8px; justify-content: center; }
 
+        .upload-zone {
+            border: 2px dashed var(--border); border-radius: var(--radius);
+            padding: 24px; text-align: center; cursor: pointer;
+            transition: border-color 0.2s; margin-bottom: 12px;
+        }
+        .upload-zone:hover { border-color: var(--accent); }
+        .upload-zone svg { width: 32px; height: 32px; color: var(--text-muted); margin-bottom: 8px; }
+        .upload-zone p { color: var(--text-muted); font-size: 0.8rem; }
+        .upload-zone input { display: none; }
+
+        .scan-result-card {
+            background: var(--bg-card); border: 1px solid var(--accent);
+            border-radius: var(--radius); padding: 16px; margin-top: 12px;
+        }
+        .scan-result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+        .scan-result-header svg { width: 18px; height: 18px; color: var(--accent); }
+        .scan-result-header h3 { font-size: 0.9rem; font-weight: 600; color: var(--accent); }
+        .scan-result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .scan-result-row:last-child { border-bottom: none; }
+        .scan-result-label { font-size: 0.75rem; color: var(--text-muted); }
+        .scan-result-value { font-size: 0.85rem; font-weight: 600; font-family: monospace; }
+
+        /* Camera Scanner Modal */
         .scanner-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98);
-            z-index: 2000;
-            justify-content: flex-start;
-            align-items: center;
-            flex-direction: column;
-            padding: 10px;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.95); z-index: 2000;
+            flex-direction: column; padding: 12px;
         }
-
         .scanner-modal.active { display: flex; }
-
-        .scanner-modal-content {
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .scanner-modal-content h3 { color: #00ff88; margin-bottom: 10px; font-size: 1rem; }
+        .scanner-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; margin-bottom: 8px; }
+        .scanner-modal-header h3 { font-size: 1rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .scanner-modal-header h3 svg { color: var(--accent); }
 
         .scanner-frame {
-            flex: 1;
-            position: relative;
-            background: #000;
-            border-radius: 15px;
-            overflow: hidden;
-            min-height: 300px;
-            border: 3px solid #ff4444;
+            flex: 1; position: relative; background: #000;
+            border-radius: var(--radius); overflow: hidden;
+            min-height: 300px; border: 2px solid var(--danger);
             transition: border-color 0.3s;
         }
-
-        .scanner-frame.detected { border-color: #00ff88; }
-
-        .scanner-frame #code-reader {
-            width: 100%;
-            height: 100%;
-            min-height: 300px;
-        }
-
-        .scanner-frame #code-reader video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-        }
+        .scanner-frame.detected { border-color: var(--accent); }
+        .scanner-frame #code-reader { width: 100%; height: 100%; min-height: 300px; }
+        .scanner-frame #code-reader video { width: 100% !important; height: 100% !important; object-fit: cover !important; }
 
         .scan-guide {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80%;
-            height: 40%;
-            border: 2px dashed rgba(255,255,255,0.5);
-            border-radius: 10px;
-            pointer-events: none;
-            z-index: 10;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 75%; height: 35%; border: 2px dashed rgba(255,255,255,0.4);
+            border-radius: 12px; pointer-events: none; z-index: 10;
+        }
+        .scan-guide::before {
+            content: ''; position: absolute; inset: -4px;
+            border: 2px solid transparent; border-radius: 14px;
+        }
+
+        .scan-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            padding: 20px 16px 16px; z-index: 20; display: none;
+        }
+        .scan-overlay.active { display: block; }
+        .scan-overlay-label { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .scan-overlay-value {
+            font-size: 1.3rem; font-weight: 800; color: var(--accent);
+            text-align: center; padding: 10px; background: var(--accent-bg);
+            border-radius: var(--radius-sm); border: 1px solid var(--accent);
+            font-family: 'SF Mono', 'Fira Code', monospace;
         }
 
         .scan-status {
-            padding: 10px;
-            font-size: 0.9rem;
-            color: #888;
-            margin-top: 10px;
+            padding: 12px 0; font-size: 0.8rem; font-weight: 500;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
         }
+        .scan-status svg { width: 16px; height: 16px; }
+        .scan-status.searching { color: var(--danger); }
+        .scan-status.found { color: var(--accent); }
 
-        .scan-status.searching { color: #ff4444; }
-        .scan-status.found { color: #00ff88; }
-
-        .scan-preview {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.85);
-            padding: 15px;
-            z-index: 20;
-            display: none;
+        /* Floating Button */
+        .fab {
+            position: fixed; bottom: 24px; right: 24px;
+            background: var(--accent); color: white; border: none;
+            border-radius: 999px; width: 56px; height: 56px;
+            font-size: 0.75rem; font-weight: 800; font-family: inherit;
+            cursor: pointer; box-shadow: 0 4px 20px rgba(16,185,129,0.4);
+            z-index: 100; display: none; transition: transform 0.2s;
         }
+        .fab:hover { transform: scale(1.05); }
+        @media (min-width: 768px) { .fab { bottom: 32px; right: calc(50% - 430px); } }
 
-        .scan-preview.active { display: block; }
-
-        .scan-preview-label {
-            font-size: 0.7rem;
-            color: #888;
-            text-transform: uppercase;
-            margin-bottom: 5px;
+        /* Modal */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.8); z-index: 200;
+            justify-content: center; align-items: center; padding: 16px;
         }
-
-        .scan-preview-value {
-            font-size: 1.4rem;
-            color: #00ff88;
-            font-weight: bold;
-            word-break: break-all;
-            text-align: center;
-            padding: 10px;
-            background: rgba(0, 255, 136, 0.1);
-            border-radius: 8px;
-            border: 2px solid #00ff88;
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius); width: 100%; max-width: 600px;
+            max-height: 85vh; overflow-y: auto;
         }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .modal-header h2 { font-size: 1rem; font-weight: 700; }
+        .modal-body { padding: 20px; }
+        .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; gap: 8px; }
 
-        .btn-close-modal { 
-            background: #ff4444; 
-            color: #fff; 
-            border: none; 
-            padding: 12px 30px; 
-            border-radius: 8px; 
-            font-size: 1rem; 
-            cursor: pointer; 
-            margin-top: 10px;
-            width: 100%;
+        /* Print */
+        .print-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        @media (min-width: 600px) { .print-grid { grid-template-columns: repeat(3, 1fr); } }
+        .print-item { background: white; padding: 10px; border-radius: var(--radius-sm); text-align: center; }
+        .print-item h5 { font-size: 0.6rem; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+        .print-item svg { max-width: 100%; }
+        .print-item .val { font-size: 0.6rem; color: #999; margin-top: 3px; font-family: monospace; }
+
+        /* Info Box */
+        .info-box {
+            background: var(--bg-elevated); border-radius: var(--radius);
+            padding: 14px 16px; margin-bottom: 16px;
+            border-left: 3px solid var(--accent);
         }
+        .info-box h4 { font-size: 0.8rem; font-weight: 600; margin-bottom: 6px; color: var(--accent); }
+        .info-box ol { color: var(--text-secondary); font-size: 0.8rem; padding-left: 18px; }
+        .info-box li { margin-bottom: 3px; }
 
+        /* Empty State */
+        .empty-state { text-align: center; padding: 48px 16px; color: var(--text-muted); }
+        .empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.3; }
+        .empty-state p { font-size: 0.85rem; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+        /* Print styles */
         @media print { body * { display: none !important; } .print-modal, .print-modal * { display: block !important; } .print-modal { position: absolute; top: 0; left: 0; width: 100%; background: #fff; padding: 20px; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Paulina Store</h1>
-            <p>Escáner de Código de Barras con Progreso</p>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-row">
+                <div class="header-logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>
+                </div>
+                <div>
+                    <h1>Paulina Store</h1>
+                    <p>Gestion de codigos de barras</p>
+                </div>
+            </div>
         </header>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="showTab('registro', this)">Registro</button>
-            <button class="tab-btn" onclick="showTab('escaner', this)">Escanear</button>
-            <button class="tab-btn" onclick="showTab('productos', this)">Productos</button>
-            <button class="tab-btn" onclick="showTab('barras', this)">Barras</button>
-        </div>
+        <!-- Navigation -->
+        <nav class="nav">
+            <button class="nav-btn active" onclick="showTab('registro', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                Registro
+            </button>
+            <button class="nav-btn" onclick="showTab('escaner', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+                Escanear
+            </button>
+            <button class="nav-btn" onclick="showTab('productos', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                Productos
+            </button>
+            <button class="nav-btn" onclick="showTab('barras', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>
+                Barras
+            </button>
+        </nav>
 
-        <!-- Registro -->
-        <div id="tab-registro" class="tab-content active">
-            <h2 class="card-title" id="formTitle">Registro de Producto</h2>
-            <div class="instructions">
-                <h3>Como usar</h3>
-                <ol>
-                    <li>Registre productos con todos sus datos</li>
-                    <li>Vaya a "Escanear" y seleccione el producto</li>
-                    <li>Escanee cada código de barras (el sistema detecta cuál es)</li>
-                    <li>El progreso se guarda automáticamente</li>
-                </ol>
+        <div class="content">
+            <!-- Registro -->
+            <div id="tab-registro" class="panel active">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                    <span id="formTitle">Registro de Producto</span>
+                </h2>
+
+                <div class="info-box">
+                    <h4>Como usar</h4>
+                    <ol>
+                        <li>Registre productos con todos sus datos</li>
+                        <li>Vaya a "Escanear" y seleccione el producto</li>
+                        <li>Escanee cada codigo de barras</li>
+                        <li>El progreso se guarda automaticamente</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <form id="productForm">
+                        <input type="hidden" id="editId" value="">
+                        <div class="form-grid">
+                            <div class="field">
+                                <label>Codigo *</label>
+                                <div class="field-scan">
+                                    <input type="text" id="codigo" required maxlength="13">
+                                    <button type="button" class="btn-icon" onclick="openCodeScanner()" title="Escanear codigo">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="field"><label>Descripcion *</label><input type="text" id="descripcion" required></div>
+                            <div class="field"><label>Precio Compra</label><input type="number" id="precioCompra" min="0" step="1" value="0"></div>
+                            <div class="field"><label>Precio Venta *</label><input type="number" id="precioVenta" required min="0" step="1"></div>
+                            <div class="field"><label>Precio x Mayor</label><input type="number" id="precioMayor" min="0" step="1" value="0"></div>
+                            <div class="field"><label>Cantidad x Mayor</label><input type="number" id="cantidadMayor" min="1" value="1"></div>
+                            <div class="field"><label>Tipo</label><select id="tipo"><option value="UNITARIO">Unitario</option><option value="PESO">Peso</option><option value="PAQUETE">Paquete</option></select></div>
+                            <div class="field"><label>Descuento / Recargo %</label><input type="number" id="descuento" step="0.01" value="0"></div>
+                            <div class="field"><label>Familia</label><select id="familia"><option value="ABARROTES">Abarrotes</option><option value="BEBIDAS">Bebidas</option><option value="LIMPIEZA">Limpieza</option><option value="HIGIENE">Higiene</option><option value="LACTEOS">Lacteos</option><option value="CARNES">Carnes</option><option value="VERDURAS">Verduras</option><option value="OTROS">Otros</option></select></div>
+                            <div class="field"><label>Proveedor</label><input type="text" id="proveedor"></div>
+                            <div class="field"><label>Stock</label><input type="number" id="stock" min="0" value="0"></div>
+                            <div class="field"><label>Stock Critico</label><input type="number" id="stockCritico" min="0" value="0"></div>
+                        </div>
+                        <div class="btn-group">
+                            <button type="submit" class="btn btn-primary">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                                Guardar
+                            </button>
+                            <button type="button" class="btn btn-outline" onclick="clearForm()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                Limpiar
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <form id="productForm">
-                <input type="hidden" id="editId" value="">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>CODIGO *</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="text" id="codigo" required maxlength="13" style="flex: 1;">
-                            <button type="button" class="btn btn-scan" onclick="openCodeScanner()" title="Escanear código">📷</button>
+
+            <!-- Escaner -->
+            <div id="tab-escaner" class="panel">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+                    Escanear Codigo
+                </h2>
+
+                <div class="card">
+                    <div class="field">
+                        <label>Seleccionar Producto</label>
+                        <select id="selectProductScan" onchange="startScanSession()">
+                            <option value="">-- Elegir producto --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="scanSessionPanel" style="display: none;">
+                    <div class="card">
+                        <div class="progress-header">
+                            <span class="progress-label" id="currentProduct"></span>
+                            <span class="progress-count" id="progressCount">0/12</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="fields-grid" id="fieldsGrid"></div>
+                        <div class="btn-group">
+                            <button class="btn btn-outline" onclick="showSummary()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Resumen
+                            </button>
+                            <button class="btn btn-outline" onclick="resetScanSession()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                Reiniciar
+                            </button>
                         </div>
                     </div>
-                    <div class="form-group"><label>DESCRIPCION *</label><input type="text" id="descripcion" required></div>
-                    <div class="form-group"><label>PRECIO COMPRA</label><input type="number" id="precioCompra" min="0" step="0.01" value="0"></div>
-                    <div class="form-group"><label>PRECIO VENTA *</label><input type="number" id="precioVenta" required min="0" step="0.01"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>PRECIO X MAYOR</label><input type="number" id="precioMayor" min="0" step="0.01" value="0"></div>
-                    <div class="form-group"><label>CANTIDAD X MAYOR</label><input type="number" id="cantidadMayor" min="1" value="1"></div>
-                    <div class="form-group"><label>TIPO</label><select id="tipo"><option value="UNITARIO">UNITARIO</option><option value="PESO">PESO</option><option value="PAQUETE">PAQUETE</option></select></div>
-                    <div class="form-group"><label>DESCUENTO/RECARGO %</label><input type="number" id="descuento" step="0.01" value="0"></div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group"><label>FAMILIA</label><select id="familia"><option value="ABARROTES">ABARROTES</option><option value="BEBIDAS">BEBIDAS</option><option value="LIMPIEZA">LIMPIEZA</option><option value="HIGIENE">HIGIENE</option><option value="LACTEOS">LACTEOS</option><option value="CARNES">CARNES</option><option value="VERDURAS">VERDURAS</option><option value="OTROS">OTROS</option></select></div>
-                    <div class="form-group"><label>PROVEEDOR</label><input type="text" id="proveedor"></div>
-                    <div class="form-group"><label>STOCK</label><input type="number" id="stock" min="0" value="0"></div>
-                    <div class="form-group"><label>STOCK CRITICO</label><input type="number" id="stockCritico" min="0" value="0"></div>
-                </div>
-                <div class="btn-row">
-                    <button type="submit" class="btn btn-primary">Guardar</button>
-                    <button type="button" class="btn btn-danger" onclick="clearForm()">Limpiar</button>
-                </div>
-            </form>
-        </div>
 
-        <!-- Escaner -->
-        <div id="tab-escaner" class="tab-content">
-            <h2 class="card-title">Escanear Código de Barras</h2>
-
-            <div class="form-group">
-                <label>Seleccionar Producto</label>
-                <select id="selectProductScan" onchange="startScanSession()">
-                    <option value="">-- Elegir producto --</option>
-                </select>
-            </div>
-
-            <div id="scanSessionPanel" style="display: none;">
-                <!-- Progress Panel -->
-                <div class="progress-panel">
-                    <div class="progress-header">
-                        <span class="progress-title" id="currentProduct"></span>
-                        <span class="progress-count" id="progressCount">0/12</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                    </div>
-
-                    <div class="fields-grid" id="fieldsGrid"></div>
-
-                    <div class="btn-group" style="margin-top: 15px;">
-                        <button class="btn btn-info" onclick="showSummary()">Ver Resumen</button>
-                        <button class="btn btn-danger" onclick="resetScanSession()">Reiniciar</button>
-                    </div>
-                </div>
-
-                <!-- Scanner -->
-                <div class="scanner-area">
                     <div class="scanner-box">
-                        <h3>Apunte al código de barras</h3>
-                        <div id="reader" style="width: 100%; min-height: 200px; background: #000; border-radius: 10px;"></div>
-                        <div class="camera-btns">
-                            <button class="btn btn-primary" id="btn-start" onclick="startCamera()">Iniciar Cámara</button>
-                            <button class="btn btn-danger" id="btn-stop" onclick="stopCamera()" style="display:none;">Detener</button>
+                        <div class="scanner-box-header">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+                            <h3>Apunte al codigo de barras</h3>
+                        </div>
+                        <div id="reader" style="width: 100%; min-height: 200px; background: #000;"></div>
+                        <div class="scanner-box-footer">
+                            <button class="btn btn-primary" id="btn-start" onclick="startCamera()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                Iniciar Camara
+                            </button>
+                            <button class="btn btn-danger" id="btn-stop" onclick="stopCamera()" style="display:none;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                                Detener
+                            </button>
                         </div>
                     </div>
-                    <div class="upload-area" onclick="document.getElementById('barcode-file').click()">
-                        <p>O suba imagen del código</p>
+
+                    <div class="upload-zone" onclick="document.getElementById('barcode-file').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <p>O suba imagen del codigo</p>
                         <input type="file" id="barcode-file" accept="image/*" onchange="handleBarcodeImage(event)">
                     </div>
-                    <div id="scanResult" class="scan-result" style="display: none;">
-                        <h3>¡Código Detectado!</h3>
-                        <div class="scan-field">
-                            <span class="scan-field-label">Campo identificado:</span>
-                            <span class="scan-field-value" id="scanned-field-name"></span>
+
+                    <div id="scanResult" class="scan-result-card" style="display: none;">
+                        <div class="scan-result-header">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <h3>Codigo Detectado</h3>
                         </div>
-                        <div class="scan-field" style="margin-top: 8px;">
-                            <span class="scan-field-label">Valor:</span>
-                            <span class="scan-field-value" id="scanned-value"></span>
+                        <div class="scan-result-row">
+                            <span class="scan-result-label">Campo</span>
+                            <span class="scan-result-value" id="scanned-field-name">-</span>
+                        </div>
+                        <div class="scan-result-row">
+                            <span class="scan-result-label">Valor</span>
+                            <span class="scan-result-value" id="scanned-value">-</span>
                         </div>
                     </div>
                 </div>
+
+                <div id="noProductSelected" class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <p>Seleccione un producto para comenzar</p>
+                </div>
             </div>
 
-            <div id="noProductSelected" style="text-align: center; padding: 40px; color: #888;">
-                Seleccione un producto para comenzar a escanear
+            <!-- Productos -->
+            <div id="tab-productos" class="panel">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                    Productos
+                </h2>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">Productos</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg></div>
+                        <div class="stat-value" id="statCodes">0</div>
+                        <div class="stat-label">Codigos</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+                        <div class="stat-value" id="statValue">$0</div>
+                        <div class="stat-label">Valor</div>
+                    </div>
+                </div>
+                <div class="product-grid" id="productList"></div>
             </div>
-        </div>
 
-        <!-- Productos -->
-        <div id="tab-productos" class="tab-content">
-            <h2 class="card-title">Productos</h2>
-            <div class="stats">
-                <div class="stat-box"><h3 id="statTotal">0</h3><p>Productos</p></div>
-                <div class="stat-box"><h3 id="statCodes">0</h3><p>Códigos</p></div>
-                <div class="stat-box"><h3 id="statValue">$0</h3><p>Valor</p></div>
-            </div>
-            <div class="product-list" id="productList"></div>
-        </div>
-
-        <!-- Barras -->
-        <div id="tab-barras" class="tab-content">
-            <h2 class="card-title">Códigos de Barras</h2>
-            <div class="form-group">
-                <label>Seleccionar Producto</label>
-                <select id="selectProductBar" onchange="showProductBarcodes()"><option value="">-- Elegir --</option></select>
-            </div>
-            <div id="barcodeContainer" style="display: none;">
-                <button class="btn btn-print" onclick="printBarcodes()">Imprimir Todos</button>
-                <div class="barcode-grid" id="barcodeGrid"></div>
+            <!-- Barras -->
+            <div id="tab-barras" class="panel">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>
+                    Codigos de Barras
+                </h2>
+                <div class="card">
+                    <div class="field">
+                        <label>Seleccionar Producto</label>
+                        <select id="selectProductBar" onchange="showProductBarcodes()"><option value="">-- Elegir --</option></select>
+                    </div>
+                </div>
+                <div id="barcodeContainer" style="display: none;">
+                    <button class="btn btn-primary btn-full" onclick="printBarcodes()" style="margin-bottom: 12px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                        Imprimir Todos
+                    </button>
+                    <div class="barcode-grid" id="barcodeGrid"></div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- FAB -->
+    <button class="fab" id="summaryBtn" onclick="showSummary()">0/12</button>
 
     <!-- Summary Modal -->
-    <div class="summary-modal" id="summaryModal">
-        <div class="summary-content">
-            <h2 style="color: #00ff88; margin-bottom: 20px;">Resumen de Escaneo</h2>
-            <div id="summaryContent"></div>
-            <button class="btn btn-primary" style="margin-top: 15px;" onclick="document.getElementById('summaryModal').classList.remove('active')">Cerrar</button>
+    <div class="modal-overlay" id="summaryModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Resumen de Escaneo</h2>
+                <button class="btn-icon" onclick="document.getElementById('summaryModal').classList.remove('active')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="summaryContent"></div>
         </div>
     </div>
-
-    <!-- Floating button -->
-    <button class="summary-btn" id="summaryBtn" onclick="showSummary()">0/12</button>
 
     <!-- Code Scanner Modal -->
     <div class="scanner-modal" id="codeScannerModal">
-        <div class="scanner-modal-content">
-            <h3>Escanear Código</h3>
-            <div class="scanner-frame" id="scannerFrame">
-                <div id="code-reader"></div>
-                <div class="scan-guide"></div>
-                <div class="scan-preview" id="scanPreview">
-                    <div class="scan-preview-label">Código detectado:</div>
-                    <div class="scan-preview-value" id="scanPreviewValue"></div>
-                </div>
-            </div>
-            <div class="scan-status searching" id="scanStatus">Buscando código...</div>
-            <button class="btn-close-modal" onclick="closeCodeScanner()">Cerrar</button>
+        <div class="scanner-modal-header">
+            <h3>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+                Escanear Codigo
+            </h3>
+            <button class="btn-icon" onclick="closeCodeScanner()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
+        <div class="scanner-frame" id="scannerFrame">
+            <div id="code-reader"></div>
+            <div class="scan-guide"></div>
+            <div class="scan-overlay" id="scanOverlay">
+                <div class="scan-overlay-label">Codigo detectado</div>
+                <div class="scan-overlay-value" id="scanPreviewValue"></div>
+            </div>
+        </div>
+        <div class="scan-status searching" id="scanStatus">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Buscando codigo...
+        </div>
+        <button class="btn btn-danger btn-full" onclick="closeCodeScanner()">Cerrar</button>
     </div>
 
     <!-- Print Modal -->
-    <div class="modal" id="printModal">
-        <div class="modal-content print-modal">
-            <h2 style="color: #000; margin-bottom: 15px;" id="printTitle">Códigos</h2>
-            <div class="print-grid" id="printContent"></div>
-            <div class="btn-group" style="margin-top: 15px;">
-                <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
-                <button class="btn btn-danger" onclick="document.getElementById('printModal').classList.remove('active')">Cerrar</button>
+    <div class="modal-overlay" id="printModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 id="printTitle">Codigos</h2>
+                <button class="btn-icon" onclick="document.getElementById('printModal').classList.remove('active')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="print-grid" id="printContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="window.print()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Imprimir
+                </button>
+                <button class="btn btn-outline" onclick="document.getElementById('printModal').classList.remove('active')">Cerrar</button>
             </div>
         </div>
     </div>
@@ -526,12 +657,9 @@
         let products = [];
         let selectedProduct = null;
         let html5QrCode = null;
+        let scanCooldown = false;
 
-        // Scan session state
-        let scanSession = {
-            productId: null,
-            scannedFields: {}
-        };
+        let scanSession = { productId: null, scannedFields: {} };
 
         const FIELDS = [
             { key: 'codigo', label: 'CODIGO PRODUCTO', getValue: p => p.codigo },
@@ -550,8 +678,8 @@
 
         // ===== TABS =====
         function showTab(name, btn) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + name).classList.add('active');
             btn.classList.add('active');
             if (name === 'productos') loadProductList();
@@ -595,12 +723,12 @@
             try {
                 const r = await fetch(id ? `${API_URL}/${id}` : API_URL, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (r.ok) { alert(id ? 'Actualizado' : 'Agregado'); this.reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').textContent = 'Registro de Producto'; await loadProducts(); }
-            } catch (e) { alert('Error'); }
+            } catch (e) { alert('Error al guardar'); }
         });
 
-        function clearForm() { 
-            document.getElementById('productForm').reset(); 
-            document.getElementById('editId').value = ''; 
+        function clearForm() {
+            document.getElementById('productForm').reset();
+            document.getElementById('editId').value = '';
             document.getElementById('formTitle').textContent = 'Registro de Producto';
         }
 
@@ -661,19 +789,18 @@
                 const isScanned = scanSession.scannedFields[f.key] === true;
 
                 const div = document.createElement('div');
-                div.className = 'field-item ' + (isScanned ? 'scanned' : 'pending');
+                div.className = 'field-chip ' + (isScanned ? 'scanned' : 'pending');
                 div.id = 'field-' + f.key;
                 div.onclick = () => selectField(f.key);
-                div.innerHTML = '<div class="field-name">' + f.label + '</div><div class="field-value">' + value + '</div><div class="field-status">' + (isScanned ? '✓ Escaneado' : '✗ Pendiente') + '</div>';
+                div.innerHTML = '<div class="field-chip-label">' + f.label + '</div><div class="field-chip-value">' + value + '</div><div class="field-chip-status">' + (isScanned ? 'Escaneado' : 'Pendiente') + '</div>';
                 grid.appendChild(div);
             });
         }
 
         function selectField(fieldKey) {
-            // Highlight the field to scan next
-            document.querySelectorAll('.field-item').forEach(el => el.style.outline = 'none');
+            document.querySelectorAll('.field-chip').forEach(el => el.style.outline = 'none');
             const el = document.getElementById('field-' + fieldKey);
-            if (el) el.style.outline = '3px solid #ffff00';
+            if (el) el.style.outline = '2px solid #f59e0b';
         }
 
         function markFieldScanned(fieldKey) {
@@ -692,7 +819,7 @@
             document.getElementById('progressCount').textContent = scanned + '/' + total;
             document.getElementById('progressFill').style.width = pct + '%';
 
-            if (scanned === total) {
+            if (scanned === total && scanned > 0) {
                 alert('¡TODOS LOS CAMPOS ESCANEADOS!\nProducto: ' + selectedProduct.descripcion);
             }
         }
@@ -709,7 +836,7 @@
         }
 
         function resetScanSession() {
-            if (confirm('¿Reiniciar progreso de escaneo?')) {
+            if (confirm('Reiniciar progreso de escaneo?')) {
                 scanSession.scannedFields = {};
                 saveScanProgress();
                 renderFieldsGrid();
@@ -718,47 +845,29 @@
             }
         }
 
-        // ===== MATCH SCANNED VALUE TO FIELD =====
+        // ===== MATCH SCANNED VALUE =====
         function matchScannedValue(value) {
             if (!selectedProduct) return null;
-
             const val = String(value).trim();
 
-            // Try to match by comparing with each field value
             for (const f of FIELDS) {
                 const fieldVal = String(f.getValue(selectedProduct)).trim();
-                
-                // Exact match
-                if (val === fieldVal) {
-                    return f;
-                }
+                if (val === fieldVal) return f;
             }
 
-            // If no exact match, try to guess by type
             const numVal = parseFloat(val);
-            
-            // If it's a number, check numeric fields
             if (!isNaN(numVal)) {
                 for (const f of FIELDS) {
                     const fieldVal = parseFloat(f.getValue(selectedProduct));
-                    if (!isNaN(fieldVal) && fieldVal === numVal && !scanSession.scannedFields[f.key]) {
-                        return f;
-                    }
+                    if (!isNaN(fieldVal) && fieldVal === numVal && !scanSession.scannedFields[f.key]) return f;
                 }
             }
 
-            // If it matches the product code format (13 digits)
-            if (/^\d{13}$/.test(val)) {
-                return FIELDS.find(f => f.key === 'codigo');
-            }
+            if (/^\d{13}$/.test(val)) return FIELDS.find(f => f.key === 'codigo');
 
-            // Default: return first pending field
             for (const f of FIELDS) {
-                if (!scanSession.scannedFields[f.key]) {
-                    return f;
-                }
+                if (!scanSession.scannedFields[f.key]) return f;
             }
-
             return null;
         }
 
@@ -771,82 +880,65 @@
 
             FIELDS.forEach(f => {
                 const item = { label: f.label, value: f.getValue(selectedProduct) };
-                if (scanSession.scannedFields[f.key]) {
-                    scanned.push(item);
-                } else {
-                    pending.push(item);
-                }
+                if (scanSession.scannedFields[f.key]) scanned.push(item);
+                else pending.push(item);
             });
 
-            document.getElementById('summaryContent').innerHTML = `
-                <div class="progress-panel" style="margin-bottom: 20px;">
-                    <div class="progress-header">
-                        <span class="progress-title">${selectedProduct.descripcion}</span>
-                        <span class="progress-count">${scanned.length}/12</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${(scanned.length/12)*100}%"></div>
-                    </div>
-                </div>
-                <div class="summary-section scanned">
-                    <h4>✓ Escaneados (${scanned.length})</h4>
-                    ${scanned.map(s => '<div class="summary-item"><strong>' + s.label + ':</strong> ' + s.value + '</div>').join('')}
-                </div>
-                <div class="summary-section pending">
-                    <h4>✗ Pendientes (${pending.length})</h4>
-                    ${pending.map(s => '<div class="summary-item"><strong>' + s.label + ':</strong> ' + s.value + '</div>').join('')}
-                </div>
-            `;
+            document.getElementById('summaryContent').innerHTML =
+                '<div style="margin-bottom:16px;">' +
+                    '<div class="progress-header"><span class="progress-label">' + selectedProduct.descripcion + '</span><span class="progress-count">' + scanned.length + '/12</span></div>' +
+                    '<div class="progress-bar"><div class="progress-fill" style="width:' + (scanned.length / 12 * 100) + '%"></div></div>' +
+                '</div>' +
+                '<div style="margin-bottom:16px;">' +
+                    '<h4 style="color:var(--accent);font-size:0.85rem;margin-bottom:8px;">Escaneados (' + scanned.length + ')</h4>' +
+                    scanned.map(function(s) { return '<div style="padding:8px 12px;background:var(--accent-bg);border-radius:8px;margin-bottom:4px;font-size:0.8rem;"><strong>' + s.label + ':</strong> ' + s.value + '</div>'; }).join('') +
+                '</div>' +
+                '<div>' +
+                    '<h4 style="color:var(--danger);font-size:0.85rem;margin-bottom:8px;">Pendientes (' + pending.length + ')</h4>' +
+                    pending.map(function(s) { return '<div style="padding:8px 12px;background:var(--danger-bg);border-radius:8px;margin-bottom:4px;font-size:0.8rem;"><strong>' + s.label + ':</strong> ' + s.value + '</div>'; }).join('') +
+                '</div>';
 
             document.getElementById('summaryModal').classList.add('active');
         }
 
-        // ===== SCANNER =====
+        // ===== MAIN SCANNER =====
         function startCamera() {
             const container = document.getElementById('reader');
             container.innerHTML = '';
-
             html5QrCode = new Html5Qrcode("reader");
 
             html5QrCode.start(
                 { facingMode: "environment" },
-                { 
-                    fps: 10, 
-                    qrbox: { width: 250, height: 100 },
-                    aspectRatio: 1.0
-                },
+                { fps: 10, qrbox: { width: 250, height: 100 }, aspectRatio: 1.0 },
                 onScanSuccess,
                 () => {}
             ).then(() => {
                 document.getElementById('btn-start').style.display = 'none';
-                document.getElementById('btn-stop').style.display = 'inline-block';
-            }).catch(err => alert('Error cámara: ' + err));
+                document.getElementById('btn-stop').style.display = 'inline-flex';
+            }).catch(err => alert('Error camara: ' + err));
         }
 
         function onScanSuccess(decodedText) {
-            if (!selectedProduct) return;
+            if (!selectedProduct || scanCooldown) return;
+            scanCooldown = true;
+            setTimeout(() => { scanCooldown = false; }, 2000);
 
             const matchedField = matchScannedValue(decodedText);
-
             document.getElementById('scanResult').style.display = 'block';
 
             if (matchedField) {
                 markFieldScanned(matchedField.key);
                 document.getElementById('scanned-field-name').textContent = matchedField.label;
                 document.getElementById('scanned-value').textContent = decodedText;
-
-                // Beep sound
                 try {
                     const ctx = new (window.AudioContext || window.webkitAudioContext)();
                     const osc = ctx.createOscillator();
-                    osc.type = 'sine';
-                    osc.frequency.value = 800;
-                    osc.connect(ctx.destination);
-                    osc.start();
+                    osc.type = 'sine'; osc.frequency.value = 800;
+                    osc.connect(ctx.destination); osc.start();
                     setTimeout(() => osc.stop(), 100);
                 } catch(e) {}
             } else {
-                document.getElementById('scanned-field-name').textContent = 'No se pudo identificar el campo';
+                document.getElementById('scanned-field-name').textContent = 'Sin coincidencia';
                 document.getElementById('scanned-value').textContent = decodedText;
             }
         }
@@ -856,18 +948,15 @@
                 html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(() => {});
                 html5QrCode = null;
             }
-            document.getElementById('btn-start').style.display = 'inline-block';
+            document.getElementById('btn-start').style.display = 'inline-flex';
             document.getElementById('btn-stop').style.display = 'none';
         }
 
         function handleBarcodeImage(event) {
             const file = event.target.files[0];
             if (!file || !selectedProduct) return;
-
             const reader = new Html5Qrcode("reader");
-            reader.scanFile(file, true).then(decodedText => {
-                onScanSuccess(decodedText);
-            }).catch(() => alert('No se detectó código'));
+            reader.scanFile(file, true).then(decodedText => { onScanSuccess(decodedText); }).catch(() => alert('No se detecto codigo'));
             event.target.value = '';
         }
 
@@ -878,16 +967,35 @@
             products.forEach(p => {
                 const scanned = loadScanProgressById(p.id);
                 const count = Object.keys(scanned).length;
-                const div = document.createElement('div');
-                div.className = 'product-item';
-                div.innerHTML = '<div onclick="selectProductForScan(' + p.id + ')"><h4>' + p.descripcion + '</h4><p>Codigo: ' + p.codigo + '</p><p>Precio: $' + parseInt(p.precio_venta) + '</p><p style="color: ' + (count === 12 ? '#00ff88' : '#ff4444') + ';">Escaneados: ' + count + '/12</p></div><div class="product-actions"><button class="btn-edit" onclick="editProduct(' + p.id + ')">✏️</button><button class="btn-delete" onclick="deleteProduct(' + p.id + ')">🗑️</button></div>';
-                list.appendChild(div);
+                const complete = count === 12;
+
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.onclick = function(e) {
+                    if (e.target.closest('.product-card-actions')) return;
+                    selectProductForScan(p.id);
+                };
+                card.innerHTML =
+                    '<div class="product-card-body">' +
+                        '<div class="product-card-name">' + p.descripcion + '</div>' +
+                        '<div class="product-card-code">' + p.codigo + '</div>' +
+                        '<div class="product-card-price">$' + parseInt(p.precio_venta) + '</div>' +
+                        '<div class="product-card-progress ' + (complete ? 'complete' : 'partial') + '">' +
+                            (complete ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>') +
+                            count + '/12' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="product-card-actions">' +
+                        '<button class="btn-icon" onclick="editProduct(' + p.id + ')" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                        '<button class="btn-icon danger" onclick="deleteProduct(' + p.id + ')" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+                    '</div>';
+                list.appendChild(card);
             });
         }
 
         function selectProductForScan(id) {
             document.getElementById('selectProductScan').value = id;
-            showTab('escaner', document.querySelectorAll('.tab-btn')[1]);
+            showTab('escaner', document.querySelectorAll('.nav-btn')[1]);
             startScanSession();
         }
 
@@ -895,19 +1003,19 @@
             const p = products.find(x => x.id == id);
             if (!p) return;
             document.getElementById('editId').value = p.id;
-            document.getElementById('formCodigo').value = p.codigo;
-            document.getElementById('formDescripcion').value = p.descripcion;
-            document.getElementById('formPrecioCompra').value = p.precio_compra;
-            document.getElementById('formPrecioVenta').value = p.precio_venta;
-            document.getElementById('formPrecioMayor').value = p.precio_mayor;
-            document.getElementById('formCantidadMayor').value = p.cantidad_mayor;
-            document.getElementById('formTipo').value = p.tipo;
-            document.getElementById('formDescuento').value = p.descuento;
-            document.getElementById('formFamilia').value = p.familia;
-            document.getElementById('formProveedor').value = p.proveedor || '';
-            document.getElementById('formStock').value = p.stock;
-            document.getElementById('formStockCritico').value = p.stock_critico;
-            showTab('registro', document.querySelectorAll('.tab-btn')[3]);
+            document.getElementById('codigo').value = p.codigo;
+            document.getElementById('descripcion').value = p.descripcion;
+            document.getElementById('precioCompra').value = p.precio_compra;
+            document.getElementById('precioVenta').value = p.precio_venta;
+            document.getElementById('precioMayor').value = p.precio_mayor;
+            document.getElementById('cantidadMayor').value = p.cantidad_mayor;
+            document.getElementById('tipo').value = p.tipo;
+            document.getElementById('descuento').value = p.descuento;
+            document.getElementById('familia').value = p.familia;
+            document.getElementById('proveedor').value = p.proveedor || '';
+            document.getElementById('stock').value = p.stock;
+            document.getElementById('stockCritico').value = p.stock_critico;
+            showTab('registro', document.querySelectorAll('.nav-btn')[0]);
             document.getElementById('formTitle').textContent = 'Editar Producto';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -917,15 +1025,14 @@
             if (!p) return;
             if (!confirm('Eliminar "' + p.descripcion + '"?')) return;
             try {
-                const res = await fetch(API + '/' + id, { method: 'DELETE' });
+                const res = await fetch(API_URL + '/' + id, { method: 'DELETE' });
                 if (res.ok) {
                     localStorage.removeItem('scan_' + id);
                     alert('Producto eliminado');
                     await loadProducts();
+                    loadProductList();
                 }
-            } catch(e) {
-                alert('Error al eliminar');
-            }
+            } catch(e) { alert('Error al eliminar'); }
         }
 
         function loadScanProgressById(id) {
@@ -948,15 +1055,15 @@
             FIELDS.forEach(f => {
                 const card = document.createElement('div');
                 card.className = 'barcode-card';
-                card.innerHTML = '<h4>' + f.label + '</h4><svg id="bc-' + f.key + '"></svg><div style="font-size:0.8rem;color:#666;margin-top:8px;">' + f.getValue(product) + '</div>';
+                card.innerHTML = '<div class="barcode-card-label">' + f.label + '</div><svg id="bc-' + f.key + '"></svg><div class="barcode-card-value">' + f.getValue(product) + '</div>';
                 grid.appendChild(card);
 
                 setTimeout(() => {
                     try {
-                        JsBarcode('#bc-' + f.key, f.getValue(product), { format: "CODE128", width: 1.5, height: 50, displayValue: true, fontSize: 12, margin: 5 });
+                        JsBarcode('#bc-' + f.key, f.getValue(product), { format: "CODE128", width: 1.5, height: 50, displayValue: true, fontSize: 11, margin: 5 });
                     } catch (e) {
                         try {
-                            JsBarcode('#bc-' + f.key, f.getValue(product), { format: "CODE39", width: 1.5, height: 50, displayValue: true, fontSize: 12, margin: 5 });
+                            JsBarcode('#bc-' + f.key, f.getValue(product), { format: "CODE39", width: 1.5, height: 50, displayValue: true, fontSize: 11, margin: 5 });
                         } catch (e2) {}
                     }
                 }, 100);
@@ -992,7 +1099,14 @@
         // Auto-codigo
         document.getElementById('descripcion').addEventListener('blur', function() {
             const inp = document.getElementById('codigo');
-            if (!inp.value) { let c = '780'; for (let i = 0; i < 9; i++) c += Math.floor(Math.random() * 10); let s = 0; for (let i = 0; i < 12; i++) s += parseInt(c[i]) * (i % 2 === 0 ? 1 : 3); c += (10 - (s % 10)) % 10; inp.value = c; }
+            if (!inp.value) {
+                let c = '780';
+                for (let i = 0; i < 9; i++) c += Math.floor(Math.random() * 10);
+                let s = 0;
+                for (let i = 0; i < 12; i++) s += parseInt(c[i]) * (i % 2 === 0 ? 1 : 3);
+                c += (10 - (s % 10)) % 10;
+                inp.value = c;
+            }
         });
 
         // ===== CODE SCANNER MODAL =====
@@ -1001,64 +1115,53 @@
 
         async function openCodeScanner() {
             document.getElementById('codeScannerModal').classList.add('active');
-            document.getElementById('code-reader').innerHTML = '<p style="color: #888; padding: 40px; text-align: center;">Iniciando cámara...</p>';
-            document.getElementById('scanStatus').textContent = 'Buscando código...';
+            document.getElementById('code-reader').innerHTML = '<p style="color: #71717a; padding: 40px; text-align: center; font-size: 0.85rem;">Iniciando camara...</p>';
+            document.getElementById('scanStatus').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Buscando codigo...';
             document.getElementById('scanStatus').className = 'scan-status searching';
             document.getElementById('scannerFrame').className = 'scanner-frame';
-            
+
             codeScanner = new Html5Qrcode("code-reader");
-            
-            // Barcode formats: CODE128=0, EAN13=4, EAN8=2, CODE39=8, UPC=14
+
             const config = {
                 fps: 10,
                 qrbox: { width: 250, height: 100 },
                 aspectRatio: 1.0,
                 formatsToSupport: [0, 2, 4, 8, 14]
             };
-            
+
             try {
                 await codeScanner.start(
                     { facingMode: "environment" },
                     config,
                     (decodedText) => {
-                        // Found a code!
                         document.getElementById('scannerFrame').className = 'scanner-frame detected';
-                        document.getElementById('scanStatus').textContent = '¡Código detectado!';
+                        document.getElementById('scanStatus').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Codigo detectado!';
                         document.getElementById('scanStatus').className = 'scan-status found';
-                        
-                        // Show preview on camera
-                        document.getElementById('scanPreview').classList.add('active');
+
+                        document.getElementById('scanOverlay').classList.add('active');
                         document.getElementById('scanPreviewValue').textContent = decodedText;
-                        
-                        // Beep
+
                         try {
                             const ctx = new (window.AudioContext || window.webkitAudioContext)();
                             const osc = ctx.createOscillator();
-                            osc.type = 'sine';
-                            osc.frequency.value = 1200;
-                            osc.connect(ctx.destination);
-                            osc.start();
+                            osc.type = 'sine'; osc.frequency.value = 1200;
+                            osc.connect(ctx.destination); osc.start();
                             setTimeout(() => osc.stop(), 150);
                         } catch(e) {}
-                        
-                        // Fill the input
+
                         const codigoInput = document.getElementById('codigo');
                         codigoInput.value = decodedText;
                         codigoInput.classList.add('scanned');
-                        
-                        // Close after delay so user can see the value
+
                         setTimeout(() => {
                             closeCodeScanner();
                             document.getElementById('descripcion').focus();
-                            setTimeout(() => {
-                                codigoInput.classList.remove('scanned');
-                            }, 3000);
-                        }, 1500);
+                            setTimeout(() => { codigoInput.classList.remove('scanned'); }, 3000);
+                        }, 1200);
                     },
                     () => {}
                 );
-                
-                // Get video track for tap-to-focus
+
                 setTimeout(() => {
                     const videoElement = document.querySelector('#code-reader video');
                     if (videoElement && videoElement.srcObject) {
@@ -1067,25 +1170,21 @@
                     const readerEl = document.getElementById('code-reader');
                     readerEl.addEventListener('click', handleTapToFocus);
                 }, 500);
-                
+
             } catch(err) {
-                alert('No se pudo acceder a la cámara. Verifica los permisos.');
+                alert('No se pudo acceder a la camara. Verifica los permisos.');
                 closeCodeScanner();
             }
         }
 
         function handleTapToFocus(e) {
             if (!codeVideoTrack) return;
-            
             try {
                 const readerEl = document.getElementById('code-reader');
                 const rect = readerEl.getBoundingClientRect();
                 const x = (e.clientX - rect.left) / rect.width;
                 const y = (e.clientY - rect.top) / rect.height;
-                
-                codeVideoTrack.applyConstraints({
-                    advanced: [{ pointsOfInterest: [{ x: x, y: y }] }]
-                }).catch(() => {});
+                codeVideoTrack.applyConstraints({ advanced: [{ pointsOfInterest: [{ x: x, y: y }] }] }).catch(() => {});
             } catch(err) {}
         }
 
@@ -1095,9 +1194,9 @@
                 codeScanner = null;
             }
             document.getElementById('codeScannerModal').classList.remove('active');
-            document.getElementById('scanPreview').classList.remove('active');
+            document.getElementById('scanOverlay').classList.remove('active');
             document.getElementById('scannerFrame').className = 'scanner-frame';
-            document.getElementById('scanStatus').textContent = 'Buscando código...';
+            document.getElementById('scanStatus').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Buscando codigo...';
             document.getElementById('scanStatus').className = 'scan-status searching';
         }
 
