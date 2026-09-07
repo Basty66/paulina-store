@@ -195,42 +195,100 @@
             color: #000;
             border: none;
             border-radius: 8px;
-            padding: 10px 15px;
-            font-size: 1.2rem;
+            padding: 8px 12px;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s;
+            flex-shrink: 0;
         }
 
-        .btn-scan:hover { background: #00cc6a; transform: scale(1.05); }
+        .btn-scan:hover { background: #00cc6a; }
 
         .scanner-modal {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(0,0,0,0.98);
             z-index: 2000;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             flex-direction: column;
+            padding: 10px;
         }
 
         .scanner-modal.active { display: flex; }
 
         .scanner-modal-content {
-            background: #1a1a3e;
-            padding: 20px;
-            border-radius: 15px;
-            width: 95%;
+            width: 100%;
             max-width: 500px;
             text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
-        .scanner-modal-content h3 { color: #00ff88; margin-bottom: 15px; }
-        .scanner-modal-content #code-reader { width: 100%; min-height: 250px; background: #000; border-radius: 10px; margin-bottom: 15px; }
-        .scanner-modal-content .btn-close-modal { background: #ff4444; color: #fff; border: none; padding: 12px 30px; border-radius: 8px; font-size: 1rem; cursor: pointer; }
-        .focus-hint { color: #00ff88; font-size: 0.85rem; margin-bottom: 10px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .scanner-modal-content h3 { color: #00ff88; margin-bottom: 10px; font-size: 1rem; }
+
+        .scanner-frame {
+            flex: 1;
+            position: relative;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            min-height: 300px;
+            border: 3px solid #ff4444;
+            transition: border-color 0.3s;
+        }
+
+        .scanner-frame.detected { border-color: #00ff88; }
+
+        .scanner-frame #code-reader {
+            width: 100%;
+            height: 100%;
+            min-height: 300px;
+        }
+
+        .scanner-frame #code-reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+
+        .scan-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 40%;
+            border: 2px dashed rgba(255,255,255,0.5);
+            border-radius: 10px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .scan-status {
+            padding: 10px;
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 10px;
+        }
+
+        .scan-status.searching { color: #ff4444; }
+        .scan-status.found { color: #00ff88; }
+
+        .btn-close-modal { 
+            background: #ff4444; 
+            color: #fff; 
+            border: none; 
+            padding: 12px 30px; 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            cursor: pointer; 
+            margin-top: 10px;
+            width: 100%;
+        }
 
         @media print { body * { display: none !important; } .print-modal, .print-modal * { display: block !important; } .print-modal { position: absolute; top: 0; left: 0; width: 100%; background: #fff; padding: 20px; } }
     </style>
@@ -397,10 +455,12 @@
     <!-- Code Scanner Modal -->
     <div class="scanner-modal" id="codeScannerModal">
         <div class="scanner-modal-content">
-            <h3>Escanear Código de Barras</h3>
-            <p class="focus-hint">Toca la pantalla para enfocar</p>
-            <div id="code-reader"></div>
-            <p style="color: #888; margin-bottom: 15px;">Mantén el código dentro del recuadro verde</p>
+            <h3>Escanear Código</h3>
+            <div class="scanner-frame" id="scannerFrame">
+                <div id="code-reader"></div>
+                <div class="scan-guide"></div>
+            </div>
+            <div class="scan-status searching" id="scanStatus">Buscando código...</div>
             <button class="btn-close-modal" onclick="closeCodeScanner()">Cerrar</button>
         </div>
     </div>
@@ -855,11 +915,13 @@
 
         async function openCodeScanner() {
             document.getElementById('codeScannerModal').classList.add('active');
-            document.getElementById('code-reader').innerHTML = '<p style="color: #888; padding: 20px;">Iniciando cámara...</p>';
+            document.getElementById('code-reader').innerHTML = '<p style="color: #888; padding: 40px; text-align: center;">Iniciando cámara...</p>';
+            document.getElementById('scanStatus').textContent = 'Buscando código...';
+            document.getElementById('scanStatus').className = 'scan-status searching';
+            document.getElementById('scannerFrame').className = 'scanner-frame';
             
             codeScanner = new Html5Qrcode("code-reader");
             
-            // Simple config that works on mobile
             const config = {
                 fps: 10,
                 qrbox: { width: 250, height: 100 },
@@ -871,20 +933,37 @@
                     { facingMode: "environment" },
                     config,
                     (decodedText) => {
-                        document.getElementById('codigo').value = decodedText;
+                        // Found a code!
+                        document.getElementById('scannerFrame').className = 'scanner-frame detected';
+                        document.getElementById('scanStatus').textContent = '¡Código detectado! Guardando...';
+                        document.getElementById('scanStatus').className = 'scan-status found';
                         
                         // Beep
                         try {
                             const ctx = new (window.AudioContext || window.webkitAudioContext)();
                             const osc = ctx.createOscillator();
                             osc.type = 'sine';
-                            osc.frequency.value = 800;
+                            osc.frequency.value = 1200;
                             osc.connect(ctx.destination);
                             osc.start();
-                            setTimeout(() => osc.stop(), 100);
+                            setTimeout(() => osc.stop(), 150);
                         } catch(e) {}
                         
-                        closeCodeScanner();
+                        // Fill the input
+                        const codigoInput = document.getElementById('codigo');
+                        codigoInput.value = decodedText;
+                        codigoInput.style.borderColor = '#00ff88';
+                        codigoInput.style.boxShadow = '0 0 10px rgba(0,255,136,0.5)';
+                        
+                        // Close after short delay
+                        setTimeout(() => {
+                            closeCodeScanner();
+                            // Reset input style after 2 seconds
+                            setTimeout(() => {
+                                codigoInput.style.borderColor = '';
+                                codigoInput.style.boxShadow = '';
+                            }, 2000);
+                        }, 800);
                     },
                     () => {}
                 );
@@ -908,31 +987,16 @@
         function handleTapToFocus(e) {
             if (!codeVideoTrack) return;
             
-            const capabilities = codeVideoTrack.getCapabilities ? codeVideoTrack.getCapabilities() : {};
-            
-            if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                // Try to set focus point
+            try {
                 const readerEl = document.getElementById('code-reader');
                 const rect = readerEl.getBoundingClientRect();
                 const x = (e.clientX - rect.left) / rect.width;
                 const y = (e.clientY - rect.top) / rect.height;
                 
-                try {
-                    codeVideoTrack.applyConstraints({
-                        advanced: [{
-                            focusMode: "continuous",
-                            pointsOfInterest: [{ x: x, y: y }]
-                        }]
-                    });
-                } catch(err) {
-                    // Try basic focus
-                    try {
-                        codeVideoTrack.applyConstraints({
-                            advanced: [{ focusMode: "manual", focusDistance: 0 }]
-                        });
-                    } catch(e2) {}
-                }
-            }
+                codeVideoTrack.applyConstraints({
+                    advanced: [{ pointsOfInterest: [{ x: x, y: y }] }]
+                }).catch(() => {});
+            } catch(err) {}
         }
 
         function closeCodeScanner() {
