@@ -608,12 +608,55 @@
             generateBarcodes();
         }
 
+        // Calcular dígito verificador EAN-13
+        function calculateEAN13CheckDigit(code12) {
+            let sum = 0;
+            for (let i = 0; i < 12; i++) {
+                sum += parseInt(code12[i]) * (i % 2 === 0 ? 1 : 3);
+            }
+            return (10 - (sum % 10)) % 10;
+        }
+
+        // Normalizar código a EAN-13 válido
+        function normalizeEAN13(code) {
+            let codeStr = String(code);
+            
+            // Si tiene 12 dígitos, agregar dígito verificador
+            if (codeStr.length === 12) {
+                return codeStr + calculateEAN13CheckDigit(codeStr);
+            }
+            
+            // Si tiene 13 dígitos, verificar si el dígito verificador es correcto
+            if (codeStr.length === 13) {
+                const first12 = codeStr.substring(0, 12);
+                const correctCheck = calculateEAN13CheckDigit(first12);
+                const currentCheck = parseInt(codeStr[12]);
+                
+                if (currentCheck !== correctCheck) {
+                    // Corregir dígito verificador
+                    return first12 + correctCheck;
+                }
+                return codeStr;
+            }
+            
+            // Si tiene 14 dígitos (GTIN-14), tomar primeros 13
+            if (codeStr.length === 14) {
+                const first12 = codeStr.substring(0, 12);
+                return first12 + calculateEAN13CheckDigit(first12);
+            }
+            
+            return codeStr;
+        }
+
         // Generar códigos de barras con JsBarcode
         function generateBarcodes() {
             document.querySelectorAll('.barcode').forEach(element => {
                 const code = element.getAttribute('data-code');
                 try {
-                    JsBarcode(element, code, {
+                    // Intentar normalizar a EAN-13 válido
+                    const normalizedCode = normalizeEAN13(code);
+                    
+                    JsBarcode(element, normalizedCode, {
                         format: "EAN13",
                         width: 1.5,
                         height: 50,
@@ -622,7 +665,19 @@
                         margin: 5
                     });
                 } catch (e) {
-                    console.error('Error generando código de barras:', code, e);
+                    // Si falla EAN-13, usar CODE128 como fallback
+                    try {
+                        JsBarcode(element, code, {
+                            format: "CODE128",
+                            width: 1.5,
+                            height: 50,
+                            displayValue: true,
+                            fontSize: 12,
+                            margin: 5
+                        });
+                    } catch (e2) {
+                        console.error('Error generando código de barras:', code, e2);
+                    }
                 }
             });
         }
