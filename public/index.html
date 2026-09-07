@@ -361,6 +361,8 @@
 
         /* Print styles */
         @media print { body * { display: none !important; } .print-modal, .print-modal * { display: block !important; } .print-modal { position: absolute; top: 0; left: 0; width: 100%; background: #fff; padding: 20px; } }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
@@ -493,12 +495,21 @@
                         </div>
                     </div>
 
-                    <div class="scanner-box">
+                    <div class="scanner-box" style="position:relative;overflow:hidden;">
                         <div class="scanner-box-header">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
                             <h3>Apunte al codigo de barras</h3>
                         </div>
                         <div id="reader" style="width: 100%; min-height: 200px; background: #000;"></div>
+                        <div id="cameraOverlay" style="display:none;position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.9));padding:20px 16px 16px;z-index:10;">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite;"></div>
+                                <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Escaneando</span>
+                            </div>
+                            <div style="font-size:0.9rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;" id="cameraProductName"></div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);" id="cameraProgressLabel">0/12 campos</div>
+                        </div>
+                        <div id="cameraScanFlash" style="display:none;position:absolute;inset:0;background:var(--accent);opacity:0;z-index:15;pointer-events:none;transition:opacity 0.15s;"></div>
                         <div class="scanner-box-footer">
                             <button class="btn btn-primary" id="btn-start" onclick="startCamera()">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -918,6 +929,13 @@
         }
 
         // ===== MAIN SCANNER =====
+        function updateCameraOverlay() {
+            if (!selectedProduct) return;
+            const scanned = Object.keys(scanSession.scannedFields).length;
+            document.getElementById('cameraProductName').textContent = selectedProduct.descripcion;
+            document.getElementById('cameraProgressLabel').textContent = scanned + '/12 campos escaneados';
+        }
+
         function startCamera() {
             const container = document.getElementById('reader');
             container.innerHTML = '';
@@ -931,6 +949,8 @@
             ).then(() => {
                 document.getElementById('btn-start').style.display = 'none';
                 document.getElementById('btn-stop').style.display = 'inline-flex';
+                document.getElementById('cameraOverlay').style.display = 'block';
+                updateCameraOverlay();
             }).catch(err => alert('Error camara: ' + err));
         }
 
@@ -939,6 +959,13 @@
             scanCooldown = true;
             setTimeout(() => { scanCooldown = false; }, 2000);
 
+            // Flash effect
+            const flash = document.getElementById('cameraScanFlash');
+            flash.style.display = 'block';
+            flash.style.opacity = '0.6';
+            setTimeout(() => { flash.style.opacity = '0'; }, 100);
+            setTimeout(() => { flash.style.display = 'none'; }, 300);
+
             const matchedField = matchScannedValue(decodedText);
             document.getElementById('scanResult').style.display = 'block';
 
@@ -946,6 +973,7 @@
                 markFieldScanned(matchedField.key);
                 document.getElementById('scanned-field-name').textContent = matchedField.label;
                 document.getElementById('scanned-value').textContent = decodedText;
+                updateCameraOverlay();
                 try {
                     const ctx = new (window.AudioContext || window.webkitAudioContext)();
                     const osc = ctx.createOscillator();
@@ -966,6 +994,7 @@
             }
             document.getElementById('btn-start').style.display = 'inline-flex';
             document.getElementById('btn-stop').style.display = 'none';
+            document.getElementById('cameraOverlay').style.display = 'none';
         }
 
         function handleBarcodeImage(event) {
