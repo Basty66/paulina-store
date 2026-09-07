@@ -23,8 +23,7 @@ app.get('/api/productos', async (req, res) => {
 
 app.post('/api/productos', async (req, res) => {
     try {
-        const { producto, codigo, precioVenta, precioCosto, categoria } = req.body;
-        const nuevoProducto = await addProducto(producto, codigo, precioVenta, precioCosto, categoria);
+        const nuevoProducto = await addProducto(req.body);
         res.status(201).json(nuevoProducto);
     } catch (error) {
         res.status(500).json({ error: 'Error al agregar producto' });
@@ -34,8 +33,7 @@ app.post('/api/productos', async (req, res) => {
 app.put('/api/productos/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { producto, codigo, precioVenta, precioCosto, categoria } = req.body;
-        const productoActualizado = await updateProducto(id, producto, codigo, precioVenta, precioCosto, categoria);
+        const productoActualizado = await updateProducto(id, req.body);
         res.json(productoActualizado);
     } catch (error) {
         res.status(500).json({ error: 'Error al actualizar producto' });
