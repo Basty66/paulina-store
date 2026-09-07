@@ -281,6 +281,38 @@
         .scan-status.searching { color: #ff4444; }
         .scan-status.found { color: #00ff88; }
 
+        .scan-preview {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.85);
+            padding: 15px;
+            z-index: 20;
+            display: none;
+        }
+
+        .scan-preview.active { display: block; }
+
+        .scan-preview-label {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .scan-preview-value {
+            font-size: 1.4rem;
+            color: #00ff88;
+            font-weight: bold;
+            word-break: break-all;
+            text-align: center;
+            padding: 10px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 8px;
+            border: 2px solid #00ff88;
+        }
+
         .btn-close-modal { 
             background: #ff4444; 
             color: #fff; 
@@ -462,6 +494,10 @@
             <div class="scanner-frame" id="scannerFrame">
                 <div id="code-reader"></div>
                 <div class="scan-guide"></div>
+                <div class="scan-preview" id="scanPreview">
+                    <div class="scan-preview-label">Código detectado:</div>
+                    <div class="scan-preview-value" id="scanPreviewValue"></div>
+                </div>
             </div>
             <div class="scan-status searching" id="scanStatus">Buscando código...</div>
             <button class="btn-close-modal" onclick="closeCodeScanner()">Cerrar</button>
@@ -938,8 +974,12 @@
                     (decodedText) => {
                         // Found a code!
                         document.getElementById('scannerFrame').className = 'scanner-frame detected';
-                        document.getElementById('scanStatus').textContent = '¡Código detectado! Guardando...';
+                        document.getElementById('scanStatus').textContent = '¡Código detectado!';
                         document.getElementById('scanStatus').className = 'scan-status found';
+                        
+                        // Show preview on camera
+                        document.getElementById('scanPreview').classList.add('active');
+                        document.getElementById('scanPreviewValue').textContent = decodedText;
                         
                         // Beep
                         try {
@@ -957,16 +997,14 @@
                         codigoInput.value = decodedText;
                         codigoInput.classList.add('scanned');
                         
-                        // Close after short delay
+                        // Close after delay so user can see the value
                         setTimeout(() => {
                             closeCodeScanner();
-                            // Focus on next field
                             document.getElementById('descripcion').focus();
-                            // Reset input style after 3 seconds
                             setTimeout(() => {
                                 codigoInput.classList.remove('scanned');
                             }, 3000);
-                        }, 500);
+                        }, 1500);
                     },
                     () => {}
                 );
@@ -1008,6 +1046,10 @@
                 codeScanner = null;
             }
             document.getElementById('codeScannerModal').classList.remove('active');
+            document.getElementById('scanPreview').classList.remove('active');
+            document.getElementById('scannerFrame').className = 'scanner-frame';
+            document.getElementById('scanStatus').textContent = 'Buscando código...';
+            document.getElementById('scanStatus').className = 'scan-status searching';
         }
 
         loadProducts();
