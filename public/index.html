@@ -536,9 +536,9 @@
         const FIELDS = [
             { key: 'codigo', label: 'CODIGO PRODUCTO', getValue: p => p.codigo },
             { key: 'descripcion', label: 'DESCRIPCION', getValue: p => p.descripcion },
-            { key: 'precioCompra', label: 'PRECIO COMPRA', getValue: p => String(p.precio_compra || 0) },
-            { key: 'precioVenta', label: 'PRECIO VENTA', getValue: p => String(p.precio_venta) },
-            { key: 'precioMayor', label: 'PRECIO X MAYOR', getValue: p => String(p.precio_mayor || 0) },
+            { key: 'precioCompra', label: 'PRECIO COMPRA', getValue: p => String(parseInt(p.precio_compra) || 0) },
+            { key: 'precioVenta', label: 'PRECIO VENTA', getValue: p => String(parseInt(p.precio_venta)) },
+            { key: 'precioMayor', label: 'PRECIO X MAYOR', getValue: p => String(parseInt(p.precio_mayor) || 0) },
             { key: 'cantidadMayor', label: 'CANTIDAD X MAYOR', getValue: p => String(p.cantidad_mayor || 1) },
             { key: 'tipo', label: 'TIPO', getValue: p => p.tipo || 'UNITARIO' },
             { key: 'descuento', label: 'DESCUENTO', getValue: p => String(p.descuento || 0) },
