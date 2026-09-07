@@ -6,7 +6,7 @@
     <title>Paulina Store - Códigos de Barras</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%2300ff88' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='%23000' font-family='Arial' font-weight='bold'>PS</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -183,8 +183,8 @@
             <h2 class="card-title">Escanear Código de Barras</h2>
             <div class="scanner-area">
                 <div class="scanner-box">
-                    <h3>Con cámara</h3>
-                    <video id="video-preview" autoplay playsinline></video>
+                    <h3>Cámara</h3>
+                    <div id="reader" style="width: 100%; min-height: 250px; background: #000; border-radius: 10px;"></div>
                     <div class="camera-btns">
                         <button class="btn btn-primary" id="btn-start" onclick="startCamera()">Iniciar Cámara</button>
                         <button class="btn btn-danger" id="btn-stop" onclick="stopCamera()" style="display:none;">Detener</button>
@@ -414,40 +414,49 @@
         }
 
         // ===== ESCANER =====
-        async function startCamera() {
-            try {
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } });
-                const video = document.getElementById('video-preview');
-                video.srcObject = videoStream;
+        let html5QrCode = null;
+
+        function startCamera() {
+            const container = document.getElementById('reader');
+            container.innerHTML = '';
+            
+            html5QrCode = new Html5Qrcode("reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 150 },
+                    aspectRatio: 1.0
+                },
+                onScanSuccess,
+                onScanFailure
+            ).then(() => {
                 document.getElementById('btn-start').style.display = 'none';
                 document.getElementById('btn-stop').style.display = 'inline-block';
-                
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                scanInterval = setInterval(() => {
-                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                        
-                        if (typeof jsQR !== 'undefined') {
-                            const code = jsQR(imageData.data, imageData.width, imageData.height);
-                            if (code) showScanResult(code.data);
-                        }
-                    }
-                }, 300);
-            } catch (err) { alert('No se pudo acceder a la camara: ' + err.message); }
+            }).catch(err => {
+                alert('Error al iniciar camara: ' + err);
+            });
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            showScanResult(decodedText);
+        }
+
+        function onScanFailure(error) {
+            // Silenciar errores de escaneo (es normal que falle mientras busca)
         }
 
         function stopCamera() {
-            if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-            if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-            const video = document.getElementById('video-preview');
-            if (video) video.srcObject = null;
-            document.getElementById('btn-start').style.display = 'inline-block';
-            document.getElementById('btn-stop').style.display = 'none';
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    html5QrCode = null;
+                    document.getElementById('reader').innerHTML = '';
+                    document.getElementById('btn-start').style.display = 'inline-block';
+                    document.getElementById('btn-stop').style.display = 'none';
+                }).catch(err => console.log(err));
+            }
         }
 
         function showScanResult(value) {
@@ -465,25 +474,15 @@
         function handleBarcodeImage(event) {
             const file = event.target.files[0];
             if (!file) return;
-            const img = new Image();
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width; canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    if (typeof jsQR !== 'undefined') {
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
-                        if (code) showScanResult(code.data);
-                        else alert('No se detecto codigo en la imagen');
-                    }
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-            event.target.value = '';
+            
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.scanFile(file, true)
+                .then(decodedText => {
+                    showScanResult(decodedText);
+                })
+                .catch(err => {
+                    alert('No se detecto codigo en la imagen');
+                });
         }
 
         // ===== IMPRESION =====
