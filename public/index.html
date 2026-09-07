@@ -698,8 +698,12 @@
             html5QrCode = new Html5Qrcode("reader");
 
             html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 100 } },
+                { facingMode: { exact: "environment" } },
+                { 
+                    fps: 10, 
+                    qrbox: { width: 250, height: 100 },
+                    aspectRatio: 1.5
+                },
                 onScanSuccess,
                 () => {}
             ).then(() => {
@@ -851,8 +855,14 @@
             codeScanner = new Html5Qrcode("code-reader");
             
             codeScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 100 } },
+                { facingMode: { exact: "environment" } },
+                { 
+                    fps: 10, 
+                    qrbox: { width: 250, height: 100 },
+                    aspectRatio: 1.5,
+                    torch: false,
+                    formatsToSupport: [0, 4, 8, 11, 14] 
+                },
                 (decodedText) => {
                     // Fill the codigo input
                     document.getElementById('codigo').value = decodedText;
