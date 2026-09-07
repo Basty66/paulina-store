@@ -101,7 +101,9 @@
             font-size: 0.875rem; font-family: inherit;
             background: var(--bg-elevated); color: var(--text-primary);
             transition: border-color 0.2s, box-shadow 0.2s;
+            text-overflow: ellipsis;
         }
+        .field select { cursor: pointer; }
         .field input:focus, .field select:focus {
             outline: none; border-color: var(--accent);
             box-shadow: 0 0 0 3px var(--accent-bg);
@@ -364,9 +366,91 @@
         @media print { body * { display: none !important; } .print-modal, .print-modal * { display: block !important; } .print-modal { position: absolute; top: 0; left: 0; width: 100%; background: #fff; padding: 20px; } }
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        /* Splash Screen */
+        .splash {
+            position: fixed; inset: 0; z-index: 9999;
+            background: var(--bg-primary);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        .splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .splash-logo {
+            width: 80px; height: 80px; margin-bottom: 24px;
+            animation: splashPulse 1.5s ease-in-out infinite;
+        }
+
+        .splash-title {
+            font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em;
+            margin-bottom: 4px;
+        }
+
+        .splash-subtitle {
+            font-size: 0.8rem; color: var(--text-muted); margin-bottom: 32px;
+        }
+
+        .splash-loader {
+            display: flex; gap: 4px; align-items: center;
+        }
+
+        .splash-bar {
+            width: 4px; height: 20px; background: var(--accent);
+            border-radius: 999px; animation: splashBar 1s ease-in-out infinite;
+        }
+        .splash-bar:nth-child(2) { animation-delay: 0.1s; }
+        .splash-bar:nth-child(3) { animation-delay: 0.2s; }
+        .splash-bar:nth-child(4) { animation-delay: 0.3s; }
+        .splash-bar:nth-child(5) { animation-delay: 0.4s; }
+
+        .splash-status {
+            margin-top: 16px; font-size: 0.7rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.1em;
+        }
+
+        @keyframes splashPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        @keyframes splashBar {
+            0%, 100% { height: 8px; opacity: 0.3; }
+            50% { height: 24px; opacity: 1; }
+        }
     </style>
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div class="splash" id="splash">
+        <svg class="splash-logo" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="80" height="80" rx="18" fill="#18181b"/>
+            <rect x="10" y="22" width="3" height="28" rx="1" fill="#10b981"/>
+            <rect x="16" y="22" width="2" height="28" rx="1" fill="#10b981"/>
+            <rect x="21" y="22" width="4" height="28" rx="1" fill="#10b981"/>
+            <rect x="28" y="22" width="2" height="28" rx="1" fill="#10b981"/>
+            <rect x="33" y="22" width="3" height="28" rx="1" fill="#10b981"/>
+            <rect x="39" y="22" width="4" height="28" rx="1" fill="#10b981"/>
+            <rect x="46" y="22" width="2" height="28" rx="1" fill="#10b981"/>
+            <rect x="51" y="22" width="3" height="28" rx="1" fill="#10b981"/>
+            <rect x="57" y="22" width="2" height="28" rx="1" fill="#10b981"/>
+            <rect x="62" y="22" width="4" height="28" rx="1" fill="#10b981"/>
+            <rect x="69" y="22" width="2" height="28" rx="1" fill="#10b981"/>
+            <rect x="10" y="54" width="61" height="2" rx="1" fill="#3f3f46"/>
+            <text x="40" y="72" text-anchor="middle" fill="#fafafa" font-family="system-ui,sans-serif" font-size="10" font-weight="700">PAULINA</text>
+        </svg>
+        <div class="splash-title">Paulina Store</div>
+        <div class="splash-subtitle">Sistema de Codigos de Barras</div>
+        <div class="splash-loader">
+            <div class="splash-bar"></div>
+            <div class="splash-bar"></div>
+            <div class="splash-bar"></div>
+            <div class="splash-bar"></div>
+            <div class="splash-bar"></div>
+        </div>
+        <div class="splash-status" id="splashStatus">Cargando sistema...</div>
+    </div>
+
     <div class="app">
         <!-- Header -->
         <header class="header">
@@ -702,7 +786,18 @@
 
         // ===== PRODUCTS =====
         async function loadProducts() {
-            try { const r = await fetch(API_URL); products = await r.json(); updateStats(); } catch (e) { console.error(e); }
+            try {
+                document.getElementById('splashStatus').textContent = 'Cargando productos...';
+                const r = await fetch(API_URL);
+                products = await r.json();
+                updateStats();
+                document.getElementById('splashStatus').textContent = 'Listo';
+                setTimeout(() => { document.getElementById('splash').classList.add('hidden'); }, 400);
+            } catch (e) {
+                console.error(e);
+                document.getElementById('splashStatus').textContent = 'Error de conexion';
+                setTimeout(() => { document.getElementById('splash').classList.add('hidden'); }, 1500);
+            }
         }
 
         function updateStats() {
@@ -745,16 +840,26 @@
         }
 
         // ===== SELECTS =====
+        function truncate(str, len) {
+            return str.length > len ? str.substring(0, len) + '...' : str;
+        }
+
         function populateSelectScan() {
             const s = document.getElementById('selectProductScan');
             s.innerHTML = '<option value="">-- Elegir producto --</option>';
-            products.forEach(p => { s.innerHTML += '<option value="' + p.id + '">' + p.descripcion + ' (' + p.codigo + ')</option>'; });
+            products.forEach(p => {
+                const label = p.codigo + ' - ' + truncate(p.descripcion, 28);
+                s.innerHTML += '<option value="' + p.id + '" title="' + p.codigo + ' - ' + p.descripcion + ' ($' + parseInt(p.precio_venta) + ')">' + label + '</option>';
+            });
         }
 
         function populateSelectBar() {
             const s = document.getElementById('selectProductBar');
             s.innerHTML = '<option value="">-- Elegir --</option>';
-            products.forEach(p => { s.innerHTML += '<option value="' + p.id + '">' + p.descripcion + ' (' + p.codigo + ')</option>'; });
+            products.forEach(p => {
+                const label = p.codigo + ' - ' + truncate(p.descripcion, 28);
+                s.innerHTML += '<option value="' + p.id + '" title="' + p.codigo + ' - ' + p.descripcion + ' ($' + parseInt(p.precio_venta) + ')">' + label + '</option>';
+            });
         }
 
         // ===== SCAN SESSION =====
@@ -776,7 +881,7 @@
 
             document.getElementById('scanSessionPanel').style.display = 'block';
             document.getElementById('noProductSelected').style.display = 'none';
-            document.getElementById('currentProduct').textContent = selectedProduct.descripcion;
+            document.getElementById('currentProduct').textContent = truncate(selectedProduct.descripcion, 35);
 
             renderFieldsGrid();
             updateProgress();
@@ -914,7 +1019,7 @@
 
             document.getElementById('summaryContent').innerHTML =
                 '<div style="margin-bottom:16px;">' +
-                    '<div class="progress-header"><span class="progress-label">' + selectedProduct.descripcion + '</span><span class="progress-count">' + scanned.length + '/12</span></div>' +
+                    '<div class="progress-header"><span class="progress-label" title="' + selectedProduct.descripcion + '">' + truncate(selectedProduct.descripcion, 30) + '</span><span class="progress-count">' + scanned.length + '/12</span></div>' +
                     '<div class="progress-bar"><div class="progress-fill" style="width:' + (scanned.length / 12 * 100) + '%"></div></div>' +
                 '</div>' +
                 '<div style="margin-bottom:16px;">' +
@@ -1022,7 +1127,7 @@
                 };
                 card.innerHTML =
                     '<div class="product-card-body">' +
-                        '<div class="product-card-name">' + p.descripcion + '</div>' +
+                        '<div class="product-card-name" title="' + p.descripcion + '">' + truncate(p.descripcion, 32) + '</div>' +
                         '<div class="product-card-code">' + p.codigo + '</div>' +
                         '<div class="product-card-price">$' + parseInt(p.precio_venta) + '</div>' +
                         '<div class="product-card-progress ' + (complete ? 'complete' : 'partial') + '">' +
