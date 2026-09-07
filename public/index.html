@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paulina Store - Generador de Códigos</title>
+    <title>Paulina Store - Generador de QR por Campo</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -12,7 +12,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
             min-height: 100vh;
             color: #fff;
         }
@@ -22,14 +22,17 @@
         header {
             text-align: center;
             padding: 20px 0;
-            border-bottom: 2px solid #e94560;
+            border-bottom: 3px solid #00ff88;
             margin-bottom: 30px;
         }
 
         header h1 {
             font-size: 2.5rem;
-            color: #e94560;
+            color: #00ff88;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
         }
+
+        header p { color: #888; margin-top: 10px; }
 
         .tabs {
             display: flex;
@@ -46,43 +49,39 @@
             font-size: 1rem;
             font-weight: 600;
             transition: all 0.3s;
-            background: #0f3460;
+            background: #2a2a4a;
             color: #fff;
+            border: 2px solid #444;
         }
 
         .tab-btn.active {
-            background: #e94560;
-        }
-
-        .tab-btn:hover {
-            transform: translateY(-2px);
+            background: #00ff88;
+            color: #000;
+            border-color: #00ff88;
         }
 
         .tab-content {
             display: none;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.03);
             border-radius: 15px;
             padding: 25px;
-            backdrop-filter: blur(10px);
+            border: 1px solid #333;
         }
 
-        .tab-content.active {
-            display: block;
-        }
+        .tab-content.active { display: block; }
 
         .card-title {
             font-size: 1.3rem;
-            color: #e94560;
+            color: #00ff88;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #e94560;
+            border-bottom: 2px solid #00ff88;
         }
 
         .form-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-bottom: 15px;
         }
 
         .form-group {
@@ -92,24 +91,24 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            color: #aaa;
+            color: #00ff88;
             font-weight: 500;
+            font-size: 0.9rem;
         }
 
-        .form-group input, .form-group select, .form-group textarea {
+        .form-group input, .form-group select {
             width: 100%;
             padding: 12px;
             border: 2px solid #333;
             border-radius: 8px;
             font-size: 1rem;
-            background: #1a1a2e;
+            background: #1a1a3e;
             color: #fff;
-            transition: border-color 0.3s;
         }
 
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        .form-group input:focus, .form-group select:focus {
             outline: none;
-            border-color: #e94560;
+            border-color: #00ff88;
         }
 
         .btn {
@@ -122,178 +121,147 @@
             font-weight: 600;
         }
 
-        .btn:hover { transform: translateY(-2px); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0, 255, 136, 0.3); }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #e94560 0%, #c23152 100%);
-            color: white;
-        }
+        .btn-primary { background: #00ff88; color: #000; }
+        .btn-success { background: #00cc6a; color: #fff; }
+        .btn-danger { background: #ff4444; color: #fff; }
+        .btn-print { background: #4488ff; color: #fff; }
+        .btn-small { padding: 8px 16px; font-size: 0.85rem; }
 
-        .btn-success {
-            background: linear-gradient(135deg, #00b894 0%, #00a381 100%);
-            color: white;
-        }
-
-        .btn-warning {
-            background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
-            color: white;
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #d63031 0%, #b71c1c 100%);
-            color: white;
-        }
-
-        .btn-small {
-            padding: 8px 16px;
-            font-size: 0.85rem;
-        }
-
-        .barcode-grid {
+        .qr-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
             margin-top: 20px;
         }
 
-        .barcode-card {
+        .qr-card {
             background: #fff;
             border-radius: 10px;
             padding: 15px;
             text-align: center;
             color: #000;
+            border: 3px solid #00ff88;
         }
 
-        .barcode-card h4 {
-            margin-bottom: 10px;
-            color: #333;
-            font-size: 0.9rem;
-        }
-
-        .barcode-card .codes {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .barcode-card .code-section {
-            text-align: center;
-        }
-
-        .barcode-card .code-section small {
-            display: block;
-            margin-top: 5px;
-            color: #666;
+        .qr-card h4 {
             font-size: 0.75rem;
+            color: #333;
+            margin-bottom: 10px;
+            text-transform: uppercase;
         }
 
-        .barcode-card .price {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #e94560;
-            margin-top: 10px;
+        .qr-card canvas {
+            max-width: 100%;
+            height: auto;
         }
 
-        .scanner-container {
-            max-width: 500px;
+        .qr-card .field-value {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+
+        .scanner-box {
+            max-width: 400px;
             margin: 0 auto;
+            text-align: center;
         }
 
         #reader {
             width: 100%;
             border-radius: 10px;
             overflow: hidden;
+            border: 3px solid #00ff88;
         }
 
         .scan-result {
-            background: #0f3460;
+            background: #1a1a3e;
+            border: 2px solid #00ff88;
             border-radius: 10px;
             padding: 20px;
             margin-top: 20px;
+            text-align: left;
         }
 
         .scan-result h3 {
-            color: #e94560;
+            color: #00ff88;
             margin-bottom: 15px;
+            text-align: center;
         }
 
-        .scan-result .field {
+        .scan-field {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #333;
-        }
-
-        .scan-result .field-label {
-            color: #aaa;
-        }
-
-        .scan-result .field-value {
-            color: #fff;
-            font-weight: 500;
-        }
-
-        .toolbar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-
-        .search-box {
-            flex: 1;
-            min-width: 200px;
             padding: 10px;
-            border: 2px solid #333;
-            border-radius: 8px;
-            font-size: 1rem;
-            background: #1a1a2e;
-            color: #fff;
-        }
-
-        .table-container {
-            overflow-x: auto;
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead {
-            background: #e94560;
-            color: white;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
             border-bottom: 1px solid #333;
         }
 
-        tbody tr:hover {
-            background: rgba(233, 69, 96, 0.1);
+        .scan-field-label { color: #888; }
+        .scan-field-value { color: #fff; font-weight: 500; }
+
+        .product-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
 
-        .actions {
-            display: flex;
-            gap: 5px;
+        .product-item {
+            background: #2a2a4a;
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid #444;
+            cursor: pointer;
+            transition: all 0.3s;
         }
+
+        .product-item:hover {
+            border-color: #00ff88;
+            transform: translateY(-2px);
+        }
+
+        .product-item h4 { color: #00ff88; margin-bottom: 5px; }
+        .product-item p { color: #888; font-size: 0.9rem; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #2a2a4a;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #00ff88;
+        }
+
+        .stat-box h3 { font-size: 1.5rem; color: #00ff88; }
+        .stat-box p { color: #888; font-size: 0.85rem; }
+
+        .instructions {
+            background: #2a2a4a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #00ff88;
+        }
+
+        .instructions h3 { color: #00ff88; margin-bottom: 10px; }
+        .instructions ol { color: #ccc; padding-left: 20px; }
+        .instructions li { margin-bottom: 8px; }
 
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
             z-index: 1000;
             justify-content: center;
             align-items: center;
@@ -302,90 +270,62 @@
         .modal.active { display: flex; }
 
         .modal-content {
-            background: #1a1a2e;
+            background: #1a1a3e;
             padding: 30px;
             border-radius: 15px;
-            max-width: 600px;
-            width: 90%;
+            max-width: 900px;
+            width: 95%;
             max-height: 90vh;
             overflow-y: auto;
         }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 1.5rem;
-            cursor: pointer;
-        }
-
-        .stats {
+        .print-qr-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .print-qr-item {
+            background: #fff;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            page-break-inside: avoid;
+        }
+
+        .print-qr-item h5 {
+            font-size: 0.6rem;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .print-qr-item canvas {
+            width: 80px !important;
+            height: 80px !important;
+        }
+
+        .print-qr-item .value {
+            font-size: 0.5rem;
+            color: #666;
+            margin-top: 3px;
+            word-break: break-all;
+        }
+
+        @media print {
+            body * { display: none !important; }
+            .print-modal, .print-modal * { display: block !important; }
+            .print-modal {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%;
+                background: #fff;
+            }
+            .print-qr-grid { grid-template-columns: repeat(4, 1fr); }
         }
 
         @media (max-width: 768px) {
-            .stats { grid-template-columns: repeat(2, 1fr); }
-            .form-row { grid-template-columns: 1fr; }
-        }
-
-        .stat-box {
-            background: linear-gradient(135deg, #0f3460 0%, #16213e 100%);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            border: 1px solid #e94560;
-        }
-
-        .stat-box h3 {
-            font-size: 1.5rem;
-            color: #e94560;
-        }
-
-        .stat-box p {
-            color: #aaa;
-            font-size: 0.85rem;
-        }
-
-        .copy-btn {
-            background: #0f3460;
-            border: none;
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-
-        .copy-btn:hover {
-            background: #e94560;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .alert-success {
-            background: rgba(0, 184, 148, 0.2);
-            border: 1px solid #00b894;
-            color: #00b894;
-        }
-
-        .alert-error {
-            background: rgba(214, 48, 49, 0.2);
-            border: 1px solid #d63031;
-            color: #d63031;
+            .stats { grid-template-columns: 1fr; }
+            .print-qr-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -393,21 +333,31 @@
     <div class="container">
         <header>
             <h1>Paulina Store</h1>
-            <p>Sistema de Códigos de Barras y QR</p>
+            <p>Generador de QR por Campo - Para escáner externo</p>
         </header>
 
         <div class="tabs">
             <button class="tab-btn active" onclick="showTab('registro')">Registro de Producto</button>
-            <button class="tab-btn" onclick="showTab('escaner')">Escanear Código</button>
-            <button class="tab-btn" onclick="showTab('codigos')">Códigos Generados</button>
-            <button class="tab-btn" onclick="showTab('lista')">Lista de Productos</button>
+            <button class="tab-btn" onclick="showTab('escaner')">Escanear QR</button>
+            <button class="tab-btn" onclick="showTab('productos')">Productos</button>
+            <button class="tab-btn" onclick="showTab('qr')">QRs por Producto</button>
         </div>
 
-        <!-- Tab: Registro de Producto -->
+        <!-- Tab: Registro -->
         <div id="tab-registro" class="tab-content active">
             <h2 class="card-title">Registro de Nuevo Producto</h2>
             
-            <div id="alertContainer"></div>
+            <div class="instructions">
+                <h3>Instrucciones de uso</h3>
+                <ol>
+                    <li>Complete los datos del producto y haga clic en "Agregar"</li>
+                    <li>Vaya a la pestaña "QRs por Producto" y seleccione el producto</li>
+                    <li>Imprima los QRs (un QR por cada campo)</li>
+                    <li>Abra su sistema de punto de venta</li>
+                    <li>Con el cursor en cada campo, escanee el QR correspondiente</li>
+                    <li>El campo se rellenará automáticamente</li>
+                </ol>
+            </div>
 
             <form id="productForm">
                 <input type="hidden" id="editId" value="">
@@ -415,7 +365,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>CÓDIGO PRODUCTO *</label>
-                        <input type="text" id="codigo" required placeholder="Ej: 7802420510403" maxlength="13">
+                        <input type="text" id="codigo" required placeholder="7802420510403" maxlength="13">
                     </div>
                     <div class="form-group">
                         <label>DESCRIPCIÓN *</label>
@@ -454,7 +404,6 @@
                     <div class="form-group">
                         <label>DESCUENTO/RECARGO (%)</label>
                         <input type="number" id="descuento" placeholder="0" step="0.01" value="0">
-                        <small style="color:#aaa">Negativo = descuento, Positivo = recargo</small>
                     </div>
                     <div class="form-group">
                         <label>FAMILIA</label>
@@ -469,15 +418,13 @@
                             <option value="OTROS">OTROS</option>
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label>PROVEEDOR</label>
+                        <input type="text" id="proveedor" placeholder="Nombre del proveedor">
+                    </div>
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>PROVEEDOR</label>
-                        <select id="proveedor">
-                            <option value="">Sin seleccionar</option>
-                        </select>
-                    </div>
                     <div class="form-group">
                         <label>STOCK</label>
                         <input type="number" id="stock" placeholder="0" min="0">
@@ -490,132 +437,102 @@
 
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" class="btn btn-primary">Agregar Producto</button>
-                    <button type="button" class="btn btn-danger" onclick="clearForm()">Limpiar Formulario</button>
+                    <button type="button" class="btn btn-danger" onclick="clearForm()">Limpiar</button>
                 </div>
             </form>
         </div>
 
-        <!-- Tab: Escaner -->
+        <!-- Tab: Escáner -->
         <div id="tab-escaner" class="tab-content">
-            <h2 class="card-title">Escanear Código QR</h2>
+            <h2 class="card-title">Escanear QR de Producto</h2>
             
-            <div class="scanner-container">
+            <div class="scanner-box">
                 <div id="reader"></div>
-                
-                <div style="margin-top: 15px; text-align: center;">
+                <div style="margin-top: 15px;">
                     <button class="btn btn-primary" onclick="startScanner()">Iniciar Escáner</button>
                     <button class="btn btn-danger" onclick="stopScanner()">Detener</button>
                 </div>
 
                 <div id="scanResult" class="scan-result" style="display: none;">
-                    <h3>Producto Encontrado</h3>
+                    <h3>Datos Escaneados</h3>
                     <div id="scanResultContent"></div>
-                    <button class="btn btn-success" style="margin-top: 15px; width: 100%;" onclick="copyToClipboard()">
-                        Copiar Información
-                    </button>
+                    <p style="margin-top: 15px; color: #888; text-align: center;">
+                        Copie estos datos y péguelos en su sistema
+                    </p>
                 </div>
             </div>
         </div>
 
-        <!-- Tab: Códigos Generados -->
-        <div id="tab-codigos" class="tab-content">
-            <h2 class="card-title">Códigos Generados</h2>
-            
-            <div class="toolbar">
-                <input type="text" class="search-box" id="searchCodes" placeholder="Buscar producto...">
-                <button class="btn btn-success btn-small" onclick="printAllBarcodes()">Imprimir Todos</button>
-            </div>
-
-            <div id="barcodeGrid" class="barcode-grid"></div>
-        </div>
-
-        <!-- Tab: Lista de Productos -->
-        <div id="tab-lista" class="tab-content">
+        <!-- Tab: Productos -->
+        <div id="tab-productos" class="tab-content">
             <h2 class="card-title">Lista de Productos</h2>
             
-            <div class="toolbar">
-                <input type="text" class="search-box" id="searchBox" placeholder="Buscar producto...">
-                <button class="btn btn-success btn-small" onclick="exportToCSV()">Exportar CSV</button>
+            <div class="stats">
+                <div class="stat-box">
+                    <h3 id="totalProducts">0</h3>
+                    <p>Productos</p>
+                </div>
+                <div class="stat-box">
+                    <h3 id="totalQRs">0</h3>
+                    <p>QRs Generados</p>
+                </div>
+                <div class="stat-box">
+                    <h3 id="totalValue">$0</h3>
+                    <p>Valor Total</p>
+                </div>
             </div>
 
-            <div class="table-container">
-                <table id="productsTable">
-                    <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Descripción</th>
-                            <th>P. Compra</th>
-                            <th>P. Venta</th>
-                            <th>P. Mayor</th>
-                            <th>Familia</th>
-                            <th>Stock</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="productsBody"></tbody>
-                </table>
+            <div class="product-list" id="productList"></div>
+        </div>
+
+        <!-- Tab: QRs por Producto -->
+        <div id="tab-qr" class="tab-content">
+            <h2 class="card-title">QRs por Campo</h2>
+            
+            <div class="form-group" style="max-width: 400px;">
+                <label>Seleccionar Producto</label>
+                <select id="selectProduct" onchange="showProductQRs()">
+                    <option value="">-- Seleccionar --</option>
+                </select>
+            </div>
+
+            <div id="qrContainer" style="display: none;">
+                <div style="margin-bottom: 15px;">
+                    <button class="btn btn-print" onclick="printQRs()">Imprimir QRs</button>
+                    <button class="btn btn-success" onclick="printBarcode()">Imprimir Código de Barras</button>
+                </div>
+
+                <div class="qr-grid" id="qrGrid"></div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Edición -->
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Editar Producto</h3>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+    <!-- Modal de Impresión -->
+    <div class="modal" id="printModal">
+        <div class="modal-content print-modal">
+            <h2 style="margin-bottom: 20px; color: #000;">QRs para Escanear</h2>
+            <div id="printContent"></div>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+                <button class="btn btn-danger" onclick="closePrintModal()">Cerrar</button>
             </div>
-            <form id="editForm">
-                <input type="hidden" id="editFormId">
-                <div class="form-group">
-                    <label>Código</label>
-                    <input type="text" id="editCodigo" required maxlength="13">
-                </div>
-                <div class="form-group">
-                    <label>Descripción</label>
-                    <input type="text" id="editDescripcion" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Precio Compra</label>
-                        <input type="number" id="editPrecioCompra" min="0" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Precio Venta</label>
-                        <input type="number" id="editPrecioVenta" required min="0" step="0.01">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar Cambios</button>
-            </form>
         </div>
     </div>
 
     <script>
         const API_URL = '/api/productos';
         let products = [];
-        let html5QrcodeScanner = null;
+        let selectedProduct = null;
 
         // Tabs
         function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + tabName).classList.add('active');
             event.target.classList.add('active');
 
-            if (tabName === 'codigos') {
-                renderBarcodeGrid();
-            }
-        }
-
-        // Alertas
-        function showAlert(message, type = 'success') {
-            const container = document.getElementById('alertContainer');
-            const alert = document.createElement('div');
-            alert.className = `alert alert-${type}`;
-            alert.textContent = message;
-            container.appendChild(alert);
-            setTimeout(() => alert.remove(), 3000);
+            if (tabName === 'productos') loadProductList();
+            if (tabName === 'qr') populateProductSelect();
         }
 
         // Cargar productos
@@ -623,9 +540,8 @@
             try {
                 const response = await fetch(API_URL);
                 products = await response.json();
-                renderTable();
-                renderBarcodeGrid();
                 updateStats();
+                populateProductSelect();
             } catch (error) {
                 console.error('Error:', error);
             }
@@ -661,10 +577,6 @@
                         body: JSON.stringify(product)
                     });
                 } else {
-                    if (products.some(p => p.codigo === product.codigo)) {
-                        showAlert('Este código ya existe', 'error');
-                        return;
-                    }
                     response = await fetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -673,163 +585,103 @@
                 }
 
                 if (response.ok) {
-                    showAlert(editId ? 'Producto actualizado' : 'Producto agregado');
+                    alert(editId ? 'Producto actualizado' : 'Producto agregado');
                     this.reset();
                     document.getElementById('editId').value = '';
                     await loadProducts();
-                } else {
-                    showAlert('Error al guardar', 'error');
                 }
             } catch (error) {
-                showAlert('Error de conexión', 'error');
+                alert('Error de conexión');
             }
         });
 
-        // Renderizar tabla
-        function renderTable(filter = '') {
-            const tbody = document.getElementById('productsBody');
-            
-            let filtered = products;
-            if (filter) {
-                const f = filter.toLowerCase();
-                filtered = products.filter(p => 
-                    p.descripcion?.toLowerCase().includes(f) ||
-                    p.codigo?.includes(f) ||
-                    p.familia?.toLowerCase().includes(f)
-                );
-            }
-
-            tbody.innerHTML = filtered.map(p => `
-                <tr>
-                    <td><strong>${p.codigo}</strong></td>
-                    <td>${p.descripcion}</td>
-                    <td>$${parseFloat(p.precio_compra || 0).toLocaleString()}</td>
-                    <td>$${parseFloat(p.precio_venta).toLocaleString()}</td>
-                    <td>$${parseFloat(p.precio_mayor || 0).toLocaleString()}</td>
-                    <td>${p.familia || '-'}</td>
-                    <td>${p.stock || 0}</td>
-                    <td class="actions">
-                        <button class="btn btn-warning btn-small" onclick='editProduct(${JSON.stringify(p)})'>Editar</button>
-                        <button class="btn btn-danger btn-small" onclick="deleteProduct(${p.id})">Eliminar</button>
-                    </td>
-                </tr>
-            `).join('');
+        // Poblar select de productos
+        function populateProductSelect() {
+            const select = document.getElementById('selectProduct');
+            select.innerHTML = '<option value="">-- Seleccionar --</option>';
+            products.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${p.descripcion} (${p.codigo})</option>`;
+            });
         }
 
-        // Renderizar grid de códigos
-        function renderBarcodeGrid(filter = '') {
-            const grid = document.getElementById('barcodeGrid');
-            
-            let filtered = products;
-            if (filter) {
-                const f = filter.toLowerCase();
-                filtered = products.filter(p => 
-                    p.descripcion?.toLowerCase().includes(f) ||
-                    p.codigo?.includes(f)
-                );
+        // Mostrar QRs de un producto
+        function showProductQRs() {
+            const productId = document.getElementById('selectProduct').value;
+            const container = document.getElementById('qrContainer');
+            const grid = document.getElementById('qrGrid');
+
+            if (!productId) {
+                container.style.display = 'none';
+                return;
             }
 
-            grid.innerHTML = filtered.map(p => `
-                <div class="barcode-card">
-                    <h4>${p.descripcion}</h4>
-                    <div class="codes">
-                        <div class="code-section">
-                            <svg class="barcode-img" data-code="${p.codigo}"></svg>
-                            <small>EAN-13</small>
-                        </div>
-                        <div class="code-section">
-                            <canvas class="qr-code" data-product='${JSON.stringify(p).replace(/'/g, "&#39;")}'></canvas>
-                            <small>QR Info</small>
-                        </div>
-                    </div>
-                    <div class="price">$${parseFloat(p.precio_venta).toLocaleString()}</div>
+            selectedProduct = products.find(p => p.id == productId);
+            if (!selectedProduct) return;
+
+            container.style.display = 'block';
+
+            // Campos para generar QRs
+            const fields = [
+                { key: 'codigo', label: 'CÓDIGO PRODUCTO', value: selectedProduct.codigo },
+                { key: 'descripcion', label: 'DESCRIPCIÓN', value: selectedProduct.descripcion },
+                { key: 'precioCompra', label: 'PRECIO COMPRA', value: selectedProduct.precio_compra || 0 },
+                { key: 'precioVenta', label: 'PRECIO VENTA', value: selectedProduct.precio_venta },
+                { key: 'precioMayor', label: 'PRECIO X MAYOR', value: selectedProduct.precio_mayor || 0 },
+                { key: 'cantidadMayor', label: 'CANTIDAD X MAYOR', value: selectedProduct.cantidad_mayor || 1 },
+                { key: 'tipo', label: 'TIPO', value: selectedProduct.tipo || 'UNITARIO' },
+                { key: 'descuento', label: 'DESCUENTO/RECARGO', value: selectedProduct.descuento || 0 },
+                { key: 'familia', label: 'FAMILIA', value: selectedProduct.familia || 'ABARROTES' },
+                { key: 'proveedor', label: 'PROVEEDOR', value: selectedProduct.proveedor || '' },
+                { key: 'stock', label: 'STOCK', value: selectedProduct.stock || 0 },
+                { key: 'stockCritico', label: 'STOCK CRÍTICO', value: selectedProduct.stock_critico || 0 }
+            ];
+
+            grid.innerHTML = fields.map(f => `
+                <div class="qr-card">
+                    <h4>${f.label}</h4>
+                    <canvas id="qr-${f.key}"></canvas>
+                    <div class="field-value">${f.value}</div>
                 </div>
             `).join('');
 
-            // Generar barcodes
-            document.querySelectorAll('.barcode-img').forEach(el => {
-                const code = el.getAttribute('data-code');
-                try {
-                    JsBarcode(el, code, {
-                        format: "EAN13",
-                        width: 1.5,
-                        height: 40,
-                        displayValue: true,
-                        fontSize: 10,
-                        margin: 5
-                    });
-                } catch (e) {
-                    JsBarcode(el, code, {
-                        format: "CODE128",
-                        width: 1.5,
-                        height: 40,
-                        displayValue: true,
-                        fontSize: 10,
-                        margin: 5
-                    });
-                }
+            // Generar QRs
+            fields.forEach(f => {
+                const canvas = document.getElementById(`qr-${f.key}`);
+                // El QR contiene solo el valor para que al escanear se copie directamente
+                QRCode.toCanvas(canvas, String(f.value), {
+                    width: 120,
+                    margin: 2,
+                    color: { dark: '#000', light: '#fff' }
+                });
             });
+        }
 
-            // Generar QR codes
-            document.querySelectorAll('.qr-code').forEach(canvas => {
-                const productData = canvas.getAttribute('data-product');
-                try {
-                    const data = JSON.parse(productData);
-                    const qrData = JSON.stringify({
-                        Codigo: data.codigo,
-                        Descripcion: data.descripcion,
-                        PrecioCompra: data.precio_compra || 0,
-                        PrecioVenta: data.precio_venta,
-                        PrecioMayor: data.precio_mayor || 0,
-                        Tipo: data.tipo || 'UNITARIO',
-                        Familia: data.familia || 'ABARROTES',
-                        Stock: data.stock || 0
-                    });
-                    
-                    QRCode.toCanvas(canvas, qrData, {
-                        width: 100,
-                        margin: 2,
-                        color: { dark: '#000', light: '#fff' }
-                    });
-                } catch (e) {
-                    console.error('Error QR:', e);
-                }
-            });
+        // Lista de productos
+        function loadProductList() {
+            const list = document.getElementById('productList');
+            list.innerHTML = products.map(p => `
+                <div class="product-item" onclick="selectProductForQR(${p.id})">
+                    <h4>${p.descripcion}</h4>
+                    <p>Código: ${p.codigo}</p>
+                    <p>Precio: $${parseFloat(p.precio_venta).toLocaleString()}</p>
+                    <p>Familia: ${p.familia || '-'}</p>
+                </div>
+            `).join('');
+        }
+
+        function selectProductForQR(id) {
+            document.getElementById('selectProduct').value = id;
+            showTab('qr');
+            document.querySelectorAll('.tab-btn')[3].click();
+            showProductQRs();
         }
 
         // Estadísticas
         function updateStats() {
             document.getElementById('totalProducts').textContent = products.length;
-            const totalValue = products.reduce((sum, p) => sum + parseFloat(p.precio_venta || 0), 0);
-            document.getElementById('totalValue').textContent = '$' + totalValue.toLocaleString();
-        }
-
-        // Editar
-        function editProduct(product) {
-            document.getElementById('editId').value = product.id;
-            document.getElementById('codigo').value = product.codigo;
-            document.getElementById('descripcion').value = product.descripcion;
-            document.getElementById('precioCompra').value = product.precio_compra || 0;
-            document.getElementById('precioVenta').value = product.precio_venta;
-            document.getElementById('precioMayor').value = product.precio_mayor || 0;
-            document.getElementById('cantidadMayor').value = product.cantidad_mayor || 1;
-            document.getElementById('tipo').value = product.tipo || 'UNITARIO';
-            document.getElementById('descuento').value = product.descuento || 0;
-            document.getElementById('familia').value = product.familia || 'ABARROTES';
-            document.getElementById('proveedor').value = product.proveedor || '';
-            document.getElementById('stock').value = product.stock || 0;
-            document.getElementById('stockCritico').value = product.stock_critico || 0;
-            
-            showTab('registro');
-            document.querySelector('.tab-btn').click();
-        }
-
-        // Eliminar
-        async function deleteProduct(id) {
-            if (confirm('¿Eliminar este producto?')) {
-                await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-                await loadProducts();
-            }
+            document.getElementById('totalQRs').textContent = products.length * 12;
+            const total = products.reduce((sum, p) => sum + parseFloat(p.precio_venta || 0), 0);
+            document.getElementById('totalValue').textContent = '$' + total.toLocaleString();
         }
 
         // Limpiar formulario
@@ -838,11 +690,94 @@
             document.getElementById('editId').value = '';
         }
 
-        // Buscar
-        document.getElementById('searchBox').addEventListener('input', e => renderTable(e.target.value));
-        document.getElementById('searchCodes').addEventListener('input', e => renderBarcodeGrid(e.target.value));
+        // Imprimir QRs
+        function printQRs() {
+            if (!selectedProduct) return;
 
-        // Escáner QR
+            const fields = [
+                { label: 'CÓDIGO PRODUCTO', value: selectedProduct.codigo },
+                { label: 'DESCRIPCIÓN', value: selectedProduct.descripcion },
+                { label: 'PRECIO COMPRA', value: selectedProduct.precio_compra || 0 },
+                { label: 'PRECIO VENTA', value: selectedProduct.precio_venta },
+                { label: 'PRECIO X MAYOR', value: selectedProduct.precio_mayor || 0 },
+                { label: 'CANTIDAD X MAYOR', value: selectedProduct.cantidad_mayor || 1 },
+                { label: 'TIPO', value: selectedProduct.tipo || 'UNITARIO' },
+                { label: 'DESCUENTO/RECARGO', value: selectedProduct.descuento || 0 },
+                { label: 'FAMILIA', value: selectedProduct.familia || 'ABARROTES' },
+                { label: 'PROVEEDOR', value: selectedProduct.proveedor || '' },
+                { label: 'STOCK', value: selectedProduct.stock || 0 },
+                { label: 'STOCK CRÍTICO', value: selectedProduct.stock_critico || 0 }
+            ];
+
+            const printContent = `
+                <div style="font-family: Arial; padding: 20px;">
+                    <h1 style="text-align: center; margin-bottom: 10px;">${selectedProduct.descripcion}</h1>
+                    <p style="text-align: center; color: #666; margin-bottom: 20px;">Código: ${selectedProduct.codigo} | Escanee cada QR en su campo correspondiente</p>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        ${fields.map(f => `
+                            <div style="text-align: center; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
+                                <div style="font-size: 10px; font-weight: bold; margin-bottom: 5px;">${f.label}</div>
+                                <canvas class="print-qr" data-value="${String(f.value).replace(/"/g, '&quot;')}"></canvas>
+                                <div style="font-size: 9px; color: #666; margin-top: 5px; word-break: break-all;">${f.value}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>QRs - ${selectedProduct.descripcion}</title>
+                    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"><\/script>
+                </head>
+                <body>
+                    ${printContent}
+                    <script>
+                        document.querySelectorAll('.print-qr').forEach(canvas => {
+                            const value = canvas.getAttribute('data-value');
+                            QRCode.toCanvas(canvas, value, { width: 100, margin: 1 });
+                        });
+                        setTimeout(() => window.print(), 1000);
+                    <\/script>
+                </body>
+                </html>
+            `);
+        }
+
+        // Imprimir código de barras
+        function printBarcode() {
+            if (!selectedProduct) return;
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>Código de Barras - ${selectedProduct.descripcion}</title>
+                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+                </head>
+                <body style="text-align: center; padding: 50px; font-family: Arial;">
+                    <h1>${selectedProduct.descripcion}</h1>
+                    <p style="color: #666;">${selectedProduct.codigo}</p>
+                    <svg id="barcode"></svg>
+                    <p style="font-size: 24px; margin-top: 20px;">$${parseFloat(selectedProduct.precio_venta).toLocaleString()}</p>
+                    <script>
+                        JsBarcode("#barcode", "${selectedProduct.codigo}", {
+                            format: "EAN13",
+                            width: 2,
+                            height: 100,
+                            fontSize: 16,
+                            margin: 10
+                        });
+                        setTimeout(() => window.print(), 500);
+                    <\/script>
+                </body>
+                </html>
+            `);
+        }
+
+        // Escáner
         let scanner = null;
 
         function startScanner() {
@@ -858,115 +793,16 @@
         }
 
         function onScanSuccess(decodedText) {
-            try {
-                const data = JSON.parse(decodedText);
-                const product = products.find(p => p.codigo === data.Codigo);
-                
-                if (product) {
-                    document.getElementById('scanResult').style.display = 'block';
-                    document.getElementById('scanResultContent').innerHTML = `
-                        <div class="field">
-                            <span class="field-label">Código:</span>
-                            <span class="field-value">${product.codigo}</span>
-                        </div>
-                        <div class="field">
-                            <span class="field-label">Descripción:</span>
-                            <span class="field-value">${product.descripcion}</span>
-                        </div>
-                        <div class="field">
-                            <span class="field-label">Precio Compra:</span>
-                            <span class="field-value">$${parseFloat(product.precio_compra || 0).toLocaleString()}</span>
-                        </div>
-                        <div class="field">
-                            <span class="field-label">Precio Venta:</span>
-                            <span class="field-value">$${parseFloat(product.precio_venta).toLocaleString()}</span>
-                        </div>
-                        <div class="field">
-                            <span class="field-label">Precio Mayor:</span>
-                            <span class="field-value">$${parseFloat(product.precio_mayor || 0).toLocaleString()}</span>
-                        </div>
-                        <div class="field">
-                            <span class="field-label">Familia:</span>
-                            <span class="field-value">${product.familia || '-'}</span>
-                        </div>
-                        <div class="field">
-                            <span class="field-label">Stock:</span>
-                            <span class="field-value">${product.stock || 0}</span>
-                        </div>
-                    `;
-                    window.lastScannedData = product;
-                } else {
-                    alert('Producto no encontrado: ' + data.Codigo);
-                }
-            } catch (e) {
-                alert('Código no válido');
-            }
-        }
-
-        function copyToClipboard() {
-            if (window.lastScannedData) {
-                const p = window.lastScannedData;
-                const text = `Código: ${p.codigo}\nDescripción: ${p.descripcion}\nPrecio Compra: ${p.precio_compra || 0}\nPrecio Venta: ${p.precio_venta}\nPrecio Mayor: ${p.precio_mayor || 0}\nFamilia: ${p.familia || ''}\nStock: ${p.stock || 0}`;
-                navigator.clipboard.writeText(text);
-                showAlert('Información copiada');
-            }
-        }
-
-        // Imprimir todos los códigos
-        function printAllBarcodes() {
-            const printContent = products.map(p => `
-                <div style="display: inline-block; margin: 10px; text-align: center; padding: 10px; border: 1px solid #ccc;">
-                    <div style="font-weight: bold; margin-bottom: 5px;">${p.descripcion}</div>
-                    <svg class="print-barcode" data-code="${p.codigo}"></svg>
-                    <div>Precio: $${parseFloat(p.precio_venta).toLocaleString()}</div>
+            document.getElementById('scanResult').style.display = 'block';
+            document.getElementById('scanResultContent').innerHTML = `
+                <div class="scan-field">
+                    <span class="scan-field-label">Valor escaneado:</span>
+                    <span class="scan-field-value" style="color: #00ff88;">${decodedText}</span>
                 </div>
-            `).join('');
-
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                <head>
-                    <title>Códigos de Barras</title>
-                    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
-                </head>
-                <body>
-                    <h1>Paulina Store - Códigos de Barras</h1>
-                    ${printContent}
-                    <script>
-                        document.querySelectorAll('.print-barcode').forEach(el => {
-                            const code = el.getAttribute('data-code');
-                            try {
-                                JsBarcode(el, code, { format: "EAN13", width: 2, height: 80, fontSize: 14, margin: 10 });
-                            } catch(e) {
-                                JsBarcode(el, code, { format: "CODE128", width: 2, height: 80, fontSize: 14, margin: 10 });
-                            }
-                        });
-                        setTimeout(() => window.print(), 500);
-                    <\/script>
-                </body>
-                </html>
-            `);
-        }
-
-        // Exportar CSV
-        function exportToCSV() {
-            const headers = ['Código', 'Descripción', 'P. Compra', 'P. Venta', 'P. Mayor', 'Familia', 'Stock'];
-            const rows = products.map(p => [
-                p.codigo,
-                `"${p.descripcion}"`,
-                p.precio_compra || 0,
-                p.precio_venta,
-                p.precio_mayor || 0,
-                p.familia || '',
-                p.stock || 0
-            ]);
-
-            const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'productos.csv';
-            a.click();
+                <p style="margin-top: 15px; color: #888; text-align: center; font-size: 0.9rem;">
+                    Copie el valor y péguelo en el campo de su sistema
+                </p>
+            `;
         }
 
         // Auto-generar código
