@@ -566,7 +566,7 @@
             const e3 = document.getElementById('statValue');
             if (e1) e1.textContent = products.length;
             if (e2) e2.textContent = products.length * 12;
-            if (e3) { const t = products.reduce((s, p) => s + parseFloat(p.precio_venta || 0), 0); e3.textContent = '$' + t.toLocaleString(); }
+            if (e3) { const t = products.reduce((s, p) => s + parseFloat(p.precio_venta || 0), 0); e3.textContent = '$' + parseInt(t); }
         }
 
         // ===== FORM =====
@@ -876,7 +876,7 @@
                     showTab('escaner', document.querySelectorAll('.tab-btn')[1]);
                     startScanSession();
                 };
-                div.innerHTML = '<h4>' + p.descripcion + '</h4><p>Codigo: ' + p.codigo + '</p><p>Precio: $' + parseFloat(p.precio_venta).toLocaleString() + '</p><p style="color: ' + (count === 12 ? '#00ff88' : '#ff4444') + ';">Escaneados: ' + count + '/12</p>';
+                div.innerHTML = '<h4>' + p.descripcion + '</h4><p>Codigo: ' + p.codigo + '</p><p>Precio: $' + parseInt(p.precio_venta) + '</p><p style="color: ' + (count === 12 ? '#00ff88' : '#ff4444') + ';">Escaneados: ' + count + '/12</p>';
                 list.appendChild(div);
             });
         }
