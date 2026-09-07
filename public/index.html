@@ -190,6 +190,46 @@
         .btn-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .btn-group .btn { flex: 1; min-width: 120px; }
 
+        .btn-scan {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-scan:hover { background: #00cc6a; transform: scale(1.05); }
+
+        .scanner-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .scanner-modal.active { display: flex; }
+
+        .scanner-modal-content {
+            background: #1a1a3e;
+            padding: 20px;
+            border-radius: 15px;
+            width: 95%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .scanner-modal-content h3 { color: #00ff88; margin-bottom: 15px; }
+        .scanner-modal-content #code-reader { width: 100%; min-height: 250px; background: #000; border-radius: 10px; margin-bottom: 15px; }
+        .scanner-modal-content .btn-close-modal { background: #ff4444; color: #fff; border: none; padding: 12px 30px; border-radius: 8px; font-size: 1rem; cursor: pointer; }
+
         @media print { body * { display: none !important; } .print-modal, .print-modal * { display: block !important; } .print-modal { position: absolute; top: 0; left: 0; width: 100%; background: #fff; padding: 20px; } }
     </style>
 </head>
@@ -222,7 +262,13 @@
             <form id="productForm">
                 <input type="hidden" id="editId" value="">
                 <div class="form-row">
-                    <div class="form-group"><label>CODIGO *</label><input type="text" id="codigo" required maxlength="13"></div>
+                    <div class="form-group">
+                        <label>CODIGO *</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="codigo" required maxlength="13" style="flex: 1;">
+                            <button type="button" class="btn btn-scan" onclick="openCodeScanner()" title="Escanear código">📷</button>
+                        </div>
+                    </div>
                     <div class="form-group"><label>DESCRIPCION *</label><input type="text" id="descripcion" required></div>
                     <div class="form-group"><label>PRECIO COMPRA</label><input type="number" id="precioCompra" min="0" step="0.01" value="0"></div>
                     <div class="form-group"><label>PRECIO VENTA *</label><input type="number" id="precioVenta" required min="0" step="0.01"></div>
@@ -345,6 +391,16 @@
 
     <!-- Floating button -->
     <button class="summary-btn" id="summaryBtn" onclick="showSummary()">0/12</button>
+
+    <!-- Code Scanner Modal -->
+    <div class="scanner-modal" id="codeScannerModal">
+        <div class="scanner-modal-content">
+            <h3>Escanear Código de Barras</h3>
+            <div id="code-reader"></div>
+            <p style="color: #888; margin-bottom: 15px;">Apunte al código de barras del producto</p>
+            <button class="btn-close-modal" onclick="closeCodeScanner()">Cerrar</button>
+        </div>
+    </div>
 
     <!-- Print Modal -->
     <div class="modal" id="printModal">
@@ -785,6 +841,49 @@
             const inp = document.getElementById('codigo');
             if (!inp.value) { let c = '780'; for (let i = 0; i < 9; i++) c += Math.floor(Math.random() * 10); let s = 0; for (let i = 0; i < 12; i++) s += parseInt(c[i]) * (i % 2 === 0 ? 1 : 3); c += (10 - (s % 10)) % 10; inp.value = c; }
         });
+
+        // ===== CODE SCANNER MODAL =====
+        let codeScanner = null;
+
+        function openCodeScanner() {
+            document.getElementById('codeScannerModal').classList.add('active');
+            
+            codeScanner = new Html5Qrcode("code-reader");
+            
+            codeScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 100 } },
+                (decodedText) => {
+                    // Fill the codigo input
+                    document.getElementById('codigo').value = decodedText;
+                    
+                    // Beep
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        const osc = ctx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.value = 800;
+                        osc.connect(ctx.destination);
+                        osc.start();
+                        setTimeout(() => osc.stop(), 100);
+                    } catch(e) {}
+                    
+                    closeCodeScanner();
+                },
+                () => {}
+            ).catch(err => {
+                alert('Error al acceder a la cámara: ' + err);
+                closeCodeScanner();
+            });
+        }
+
+        function closeCodeScanner() {
+            if (codeScanner) {
+                codeScanner.stop().then(() => { codeScanner.clear(); codeScanner = null; }).catch(() => {});
+                codeScanner = null;
+            }
+            document.getElementById('codeScannerModal').classList.remove('active');
+        }
 
         loadProducts();
     </script>
