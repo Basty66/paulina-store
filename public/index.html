@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paulina Store - QR por Campo</title>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -34,6 +33,7 @@
             margin-bottom: 15px;
             overflow-x: auto;
             padding-bottom: 5px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tab-btn {
@@ -157,7 +157,17 @@
             text-transform: uppercase;
         }
 
-        .qr-card canvas { max-width: 100%; height: auto !important; }
+        .qr-card .qr-box {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-card .qr-box img { max-width: 100%; max-height: 100%; }
 
         .qr-card .field-value {
             font-size: 0.7rem;
@@ -166,9 +176,38 @@
             word-break: break-all;
         }
 
-        .scanner-box { max-width: 400px; margin: 0 auto; }
+        .scanner-area {
+            max-width: 500px;
+            margin: 0 auto;
+            text-align: center;
+        }
 
-        #reader { width: 100%; border-radius: 10px; overflow: hidden; border: 3px solid #00ff88; }
+        .scanner-box {
+            background: #1a1a3e;
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #00ff88;
+            margin-bottom: 15px;
+        }
+
+        .scanner-box h3 {
+            color: #00ff88;
+            margin-bottom: 15px;
+        }
+
+        #video-preview {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            background: #000;
+        }
+
+        .camera-btns {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
 
         .scan-result {
             background: #1a1a3e;
@@ -178,18 +217,24 @@
             margin-top: 15px;
         }
 
-        .scan-result h3 { color: #00ff88; margin-bottom: 10px; text-align: center; font-size: 1rem; }
+        .scan-result h3 { color: #00ff88; margin-bottom: 10px; font-size: 1rem; }
 
         .scan-field {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #333;
-            font-size: 0.9rem;
+            background: #2a2a4a;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
         }
 
-        .scan-field-label { color: #888; }
-        .scan-field-value { color: #fff; font-weight: 500; }
+        .scan-field-label { color: #888; font-size: 0.8rem; display: block; margin-bottom: 5px; }
+        .scan-field-value { color: #00ff88; font-size: 1.2rem; font-weight: 600; word-break: break-all; }
+
+        .scan-instructions {
+            color: #888;
+            font-size: 0.85rem;
+            margin-top: 10px;
+            text-align: center;
+        }
 
         .product-list {
             display: grid;
@@ -290,11 +335,25 @@
         }
 
         .print-item h5 { font-size: 0.6rem; color: #333; margin-bottom: 5px; }
-        .print-item canvas { width: 80px !important; height: 80px !important; }
+        .print-item .qr-img { width: 80px; height: 80px; }
         .print-item .val { font-size: 0.55rem; color: #666; margin-top: 3px; word-break: break-all; }
 
         .btn-group { display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
         .btn-group .btn { flex: 1; min-width: 120px; }
+
+        .upload-area {
+            background: #2a2a4a;
+            border: 2px dashed #444;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .upload-area:hover { border-color: #00ff88; }
+        .upload-area p { color: #888; }
+        .upload-area input { display: none; }
 
         @media print {
             body * { display: none !important; }
@@ -326,15 +385,14 @@
                 <h3>Como usar</h3>
                 <ol>
                     <li>Complete los datos y guarde</li>
-                    <li>Vaya a la pestaña "QRs" y seleccione el producto</li>
-                    <li>Imprima los QRs</li>
-                    <li>En su sistema, coloque el cursor en cada campo y escanee el QR</li>
+                    <li>Vaya a "QRs" y seleccione el producto</li>
+                    <li>Imprima los QRs (1 por campo)</li>
+                    <li>En su sistema, coloque cursor en cada campo y escanee</li>
                 </ol>
             </div>
 
             <form id="productForm">
                 <input type="hidden" id="editId" value="">
-                
                 <div class="form-row">
                     <div class="form-group">
                         <label>CODIGO *</label>
@@ -353,7 +411,6 @@
                         <input type="number" id="precioVenta" required min="0" step="0.01">
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label>PRECIO X MAYOR</label>
@@ -376,7 +433,6 @@
                         <input type="number" id="descuento" step="0.01" value="0">
                     </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label>FAMILIA</label>
@@ -404,7 +460,6 @@
                         <input type="number" id="stockCritico" min="0" value="0">
                     </div>
                 </div>
-
                 <div class="btn-row">
                     <button type="submit" class="btn btn-primary">Guardar</button>
                     <button type="button" class="btn btn-danger" onclick="clearForm()">Limpiar</button>
@@ -415,15 +470,30 @@
         <!-- Escaner -->
         <div id="tab-escaner" class="tab-content">
             <h2 class="card-title">Escanear QR</h2>
-            <div class="scanner-box">
-                <div id="reader"></div>
-                <div class="btn-group" style="margin-top: 15px;">
-                    <button class="btn btn-primary" onclick="startScanner()">Iniciar</button>
-                    <button class="btn btn-danger" onclick="stopScanner()">Detener</button>
+            
+            <div class="scanner-area">
+                <div class="scanner-box">
+                    <h3>Con camara</h3>
+                    <video id="video-preview" autoplay playsinline></video>
+                    <div class="camera-btns">
+                        <button class="btn btn-primary" id="btn-start-camera" onclick="startCamera()">Iniciar Camara</button>
+                        <button class="btn btn-danger" id="btn-stop-camera" onclick="stopCamera()" style="display:none;">Detener</button>
+                    </div>
                 </div>
+
+                <div class="upload-area" onclick="document.getElementById('qr-file').click()">
+                    <p>O suba una imagen del QR</p>
+                    <input type="file" id="qr-file" accept="image/*" onchange="handleQRImage(event)">
+                </div>
+
                 <div id="scanResult" class="scan-result" style="display: none;">
                     <h3>Valor Escaneado</h3>
-                    <div id="scanResultContent"></div>
+                    <div class="scan-field">
+                        <span class="scan-field-label">Contenido del QR:</span>
+                        <span class="scan-field-value" id="scanned-value"></span>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top: 15px;" onclick="copyScannedValue()">Copiar Valor</button>
+                    <p class="scan-instructions">Copie y pegue este valor en el campo de su sistema</p>
                 </div>
             </div>
         </div>
@@ -432,18 +502,9 @@
         <div id="tab-productos" class="tab-content">
             <h2 class="card-title">Productos</h2>
             <div class="stats">
-                <div class="stat-box">
-                    <h3 id="statTotal">0</h3>
-                    <p>Productos</p>
-                </div>
-                <div class="stat-box">
-                    <h3 id="statQRs">0</h3>
-                    <p>QRs</p>
-                </div>
-                <div class="stat-box">
-                    <h3 id="statValue">$0</h3>
-                    <p>Valor</p>
-                </div>
+                <div class="stat-box"><h3 id="statTotal">0</h3><p>Productos</p></div>
+                <div class="stat-box"><h3 id="statQRs">0</h3><p>QRs</p></div>
+                <div class="stat-box"><h3 id="statValue">$0</h3><p>Valor</p></div>
             </div>
             <div class="product-list" id="productList"></div>
         </div>
@@ -479,14 +540,15 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script>
         const API_URL = '/api/productos';
         let products = [];
         let selectedProduct = null;
-        let scanner = null;
+        let videoStream = null;
+        let scanInterval = null;
 
-        // Tabs
+        // ===== TABS =====
         function showTab(name, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -494,9 +556,10 @@
             btn.classList.add('active');
             if (name === 'productos') loadProductList();
             if (name === 'qr') populateSelect();
+            if (name === 'escaner') stopCamera();
         }
 
-        // Cargar productos
+        // ===== PRODUCTOS =====
         async function loadProducts() {
             try {
                 const r = await fetch(API_URL);
@@ -505,20 +568,19 @@
             } catch (e) { console.error(e); }
         }
 
-        // Estadisticas
         function updateStats() {
-            const el1 = document.getElementById('statTotal');
-            const el2 = document.getElementById('statQRs');
-            const el3 = document.getElementById('statValue');
-            if (el1) el1.textContent = products.length;
-            if (el2) el2.textContent = products.length * 12;
-            if (el3) {
-                const total = products.reduce((s, p) => s + parseFloat(p.precio_venta || 0), 0);
-                el3.textContent = '$' + total.toLocaleString();
+            const e1 = document.getElementById('statTotal');
+            const e2 = document.getElementById('statQRs');
+            const e3 = document.getElementById('statValue');
+            if (e1) e1.textContent = products.length;
+            if (e2) e2.textContent = products.length * 12;
+            if (e3) {
+                const t = products.reduce((s, p) => s + parseFloat(p.precio_venta || 0), 0);
+                e3.textContent = '$' + t.toLocaleString();
             }
         }
 
-        // Formulario
+        // ===== FORMULARIO =====
         document.getElementById('productForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const id = document.getElementById('editId').value;
@@ -536,12 +598,10 @@
                 stock: parseInt(document.getElementById('stock').value) || 0,
                 stockCritico: parseInt(document.getElementById('stockCritico').value) || 0
             };
-
             try {
                 const url = id ? `${API_URL}/${id}` : API_URL;
-                const method = id ? 'PUT' : 'POST';
                 const r = await fetch(url, {
-                    method,
+                    method: id ? 'PUT' : 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
@@ -559,7 +619,7 @@
             document.getElementById('editId').value = '';
         }
 
-        // Select productos
+        // ===== SELECT PRODUCTOS =====
         function populateSelect() {
             const s = document.getElementById('selectProduct');
             s.innerHTML = '<option value="">-- Elegir --</option>';
@@ -568,7 +628,7 @@
             });
         }
 
-        // QRs de un producto
+        // ===== QRs POR PRODUCTO =====
         function showProductQRs() {
             const pid = document.getElementById('selectProduct').value;
             const box = document.getElementById('qrContainer');
@@ -598,20 +658,17 @@
             fields.forEach(f => {
                 const card = document.createElement('div');
                 card.className = 'qr-card';
-                card.innerHTML = '<h4>' + f.label + '</h4><div id="qr-' + f.key + '"></div><div class="field-value">' + f.value + '</div>';
+                const val = String(f.value);
+                
+                // Generar QR como imagen usando API externa
+                const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(val);
+                
+                card.innerHTML = '<h4>' + f.label + '</h4><div class="qr-box"><img src="' + qrUrl + '" alt="QR"></div><div class="field-value">' + val + '</div>';
                 grid.appendChild(card);
-
-                const qrDiv = document.getElementById('qr-' + f.key);
-                new QRCode(qrDiv, {
-                    text: String(f.value),
-                    width: 120,
-                    height: 120,
-                    correctLevel: QRCode.CorrectLevel.M
-                });
             });
         }
 
-        // Lista de productos
+        // ===== LISTA DE PRODUCTOS =====
         function loadProductList() {
             const list = document.getElementById('productList');
             list.innerHTML = '';
@@ -628,10 +685,111 @@
             });
         }
 
-        // Imprimir QRs
+        // ===== ESCANER CON CAMARA =====
+        async function startCamera() {
+            try {
+                const video = document.getElementById('video-preview');
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+                });
+                video.srcObject = videoStream;
+                document.getElementById('btn-start-camera').style.display = 'none';
+                document.getElementById('btn-stop-camera').style.display = 'inline-block';
+                
+                // Iniciar escaneo cada 500ms
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                scanInterval = setInterval(() => {
+                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        
+                        if (typeof jsQR !== 'undefined') {
+                            const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+                            if (code) {
+                                showScanResult(code.data);
+                            }
+                        }
+                    }
+                }, 500);
+                
+            } catch (err) {
+                alert('No se pudo acceder a la camara: ' + err.message);
+            }
+        }
+
+        function stopCamera() {
+            if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+            if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+            const video = document.getElementById('video-preview');
+            if (video) video.srcObject = null;
+            document.getElementById('btn-start-camera').style.display = 'inline-block';
+            document.getElementById('btn-stop-camera').style.display = 'none';
+        }
+
+        function showScanResult(value) {
+            document.getElementById('scanResult').style.display = 'block';
+            document.getElementById('scanned-value').textContent = value;
+        }
+
+        function copyScannedValue() {
+            const val = document.getElementById('scanned-value').textContent;
+            navigator.clipboard.writeText(val).then(() => {
+                alert('Valor copiado: ' + val);
+            }).catch(() => {
+                // Fallback
+                const ta = document.createElement('textarea');
+                ta.value = val;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                alert('Valor copiado: ' + val);
+            });
+        }
+
+        // ===== ESCANER POR IMAGEN =====
+        function handleQRImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const img = new Image();
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    if (typeof jsQR !== 'undefined') {
+                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+                        if (code) {
+                            showScanResult(code.data);
+                        } else {
+                            alert('No se detecto ningun QR en la imagen');
+                        }
+                    } else {
+                        alert('Libreria de escaneo no cargada');
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            event.target.value = '';
+        }
+
+        // ===== IMPRESION =====
         function printQRs() {
             if (!selectedProduct) return;
-
             const fields = [
                 { label: 'CODIGO', value: selectedProduct.codigo },
                 { label: 'DESCRIPCION', value: selectedProduct.descripcion },
@@ -654,14 +812,10 @@
             fields.forEach(f => {
                 const item = document.createElement('div');
                 item.className = 'print-item';
-                item.innerHTML = '<h5>' + f.label + '</h5><div id="printqr-' + f.key + '"></div><div class="val">' + f.value + '</div>';
+                const val = String(f.value);
+                const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(val);
+                item.innerHTML = '<h5>' + f.label + '</h5><img class="qr-img" src="' + qrUrl + '" alt="QR"><div class="val">' + val + '</div>';
                 content.appendChild(item);
-
-                new QRCode(document.getElementById('printqr-' + f.key), {
-                    text: String(f.value),
-                    width: 100,
-                    height: 100
-                });
             });
 
             document.getElementById('printModal').classList.add('active');
@@ -675,19 +829,6 @@
 
         function doPrint() { window.print(); }
         function closePrintModal() { document.getElementById('printModal').classList.remove('active'); }
-
-        // Escaner
-        function startScanner() {
-            scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-            scanner.render(function(decodedText) {
-                document.getElementById('scanResult').style.display = 'block';
-                document.getElementById('scanResultContent').innerHTML = '<div class="scan-field"><span class="scan-field-label">Valor:</span><span class="scan-field-value" style="color:#00ff88;">' + decodedText + '</span></div><p style="margin-top:10px;color:#888;text-align:center;font-size:0.85rem;">Copie y pegue en su campo</p>';
-            });
-        }
-
-        function stopScanner() {
-            if (scanner) { scanner.clear(); scanner = null; }
-        }
 
         // Auto-codigo
         document.getElementById('descripcion').addEventListener('blur', function() {
