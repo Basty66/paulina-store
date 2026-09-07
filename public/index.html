@@ -791,10 +791,26 @@
                 const div = document.createElement('div');
                 div.className = 'field-chip ' + (isScanned ? 'scanned' : 'pending');
                 div.id = 'field-' + f.key;
-                div.onclick = () => selectField(f.key);
-                div.innerHTML = '<div class="field-chip-label">' + f.label + '</div><div class="field-chip-value">' + value + '</div><div class="field-chip-status">' + (isScanned ? 'Escaneado' : 'Pendiente') + '</div>';
+                div.innerHTML =
+                    '<div class="field-chip-label">' + f.label + '</div>' +
+                    '<div class="field-chip-value">' + value + '</div>' +
+                    '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">' +
+                        '<div class="field-chip-status">' + (isScanned ? 'Realizado' : 'Pendiente') + '</div>' +
+                        (isScanned
+                            ? '<button onclick="event.stopPropagation();unmarkField(\'' + f.key + '\')" style="background:var(--danger-bg);color:var(--danger);border:none;border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:600;cursor:pointer;">Deshacer</button>'
+                            : '<button onclick="event.stopPropagation();markFieldScanned(\'' + f.key + '\')" style="background:var(--accent-bg);color:var(--accent);border:none;border-radius:6px;padding:3px 8px;font-size:0.65rem;font-weight:600;cursor:pointer;">Hecho</button>'
+                        ) +
+                    '</div>';
                 grid.appendChild(div);
             });
+        }
+
+        function unmarkField(fieldKey) {
+            delete scanSession.scannedFields[fieldKey];
+            saveScanProgress();
+            renderFieldsGrid();
+            updateProgress();
+            updateSummaryBtn();
         }
 
         function selectField(fieldKey) {
@@ -973,7 +989,6 @@
                 card.className = 'product-card';
                 card.onclick = function(e) {
                     if (e.target.closest('.product-card-actions')) return;
-                    selectProductForScan(p.id);
                 };
                 card.innerHTML =
                     '<div class="product-card-body">' +
