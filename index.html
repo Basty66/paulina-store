@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paulina Store - Generador de Códigos de Barras</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1000px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 25px;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .barcode-cell {
+            text-align: center;
+        }
+
+        .barcode-cell svg {
+            max-width: 120px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 1.8rem;
+        }
+
+        .stat-box p {
+            opacity: 0.9;
+            font-size: 0.85rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .print-only {
+            display: none;
+        }
+
+        @media print {
+            body * {
+                display: none !important;
+            }
+            .print-only, .print-only * {
+                display: block !important;
+            }
+            .print-only {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Paulina Store</h1>
+            <p>Generador de Códigos de Barras</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Panel de Formulario -->
+            <div class="card">
+                <h2 class="card-title">Agregar Producto</h2>
+                <form id="productForm">
+                    <div class="form-group">
+                        <label for="producto">Nombre del Producto *</label>
+                        <input type="text" id="producto" required placeholder="Ej: Salsa BBQ 250ml">
+                    </div>
+                    <div class="form-group">
+                        <label for="codigo">Código de Barras *</label>
+                        <input type="text" id="codigo" required placeholder="Ej: 7802337203252" maxlength="13">
+                        <small>13 dígitos (EAN-13)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="precioVenta">Precio de Venta *</label>
+                        <input type="number" id="precioVenta" required placeholder="Ej: 1500" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="precioCosto">Precio de Costo</label>
+                        <input type="number" id="precioCosto" placeholder="Ej: 800" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="categoria">Categoría</label>
+                        <select id="categoria">
+                            <option value="">Seleccionar...</option>
+                            <option value="Alimentos">Alimentos</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Limpieza">Limpieza</option>
+                            <option value="Higiene">Higiene</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Agregar Producto</button>
+                </form>
+
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+                <div class="stats">
+                    <div class="stat-box">
+                        <h3 id="totalProducts">0</h3>
+                        <p>Productos</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3 id="totalValue">$0</h3>
+                        <p>Valor Total</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3 id="totalBarcodes">0</h3>
+                        <p>Códigos</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel de Tabla -->
+            <div class="card">
+                <h2 class="card-title">Lista de Productos</h2>
+                
+                <div class="toolbar">
+                    <input type="text" class="search-box" id="searchBox" placeholder="Buscar producto...">
+                    <button class="btn btn-success btn-small" onclick="exportToCSV()">Exportar CSV</button>
+                    <button class="btn btn-warning btn-small" onclick="printBarcodes()">Imprimir</button>
+                    <button class="btn btn-danger btn-small" onclick="clearAll()">Limpiar Todo</button>
+                </div>
+
+                <div class="table-container">
+                    <table id="productsTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Producto</th>
+                                <th>Precio Venta</th>
+                                <th>Precio Costo</th>
+                                <th>Categoría</th>
+                                <th>Código de Barras</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsBody">
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="emptyState">
+                        <h3>No hay productos</h3>
+                        <p>Agregue productos usando el formulario</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Producto</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="editForm">
+                <input type="hidden" id="editIndex">
+                <div class="form-group">
+                    <label for="editProducto">Nombre del Producto</label>
+                    <input type="text" id="editProducto" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCodigo">Código de Barras</label>
+                    <input type="text" id="editCodigo" required maxlength="13">
+                </div>
+                <div class="form-group">
+                    <label for="editPrecioVenta">Precio de Venta</label>
+                    <input type="number" id="editPrecioVenta" required min="0">
+                </div>
+                <div class="form-group">
+                    <label for="editPrecioCosto">Precio de Costo</label>
+                    <input type="number" id="editPrecioCosto" min="0">
+                </div>
+                <div class="form-group">
+                    <label for="editCategoria">Categoría</label>
+                    <select id="editCategoria">
+                        <option value="">Seleccionar...</option>
+                        <option value="Alimentos">Alimentos</option>
+                        <option value="Bebidas">Bebidas</option>
+                        <option value="Limpieza">Limpieza</option>
+                        <option value="Higiene">Higiene</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Área de impresión -->
+    <div class="print-only" id="printArea">
+        <h2>Paulina Store - Códigos de Barras</h2>
+        <div id="printBarcodes"></div>
+    </div>
+
+    <script>
+        let products = JSON.parse(localStorage.getItem('paulinaProducts')) || [];
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTable();
+            updateStats();
+        });
+
+        // Formulario de agregar
+        document.getElementById('productForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const product = {
+                producto: document.getElementById('producto').value.trim(),
+                codigo: document.getElementById('codigo').value.trim(),
+                precioVenta: parseFloat(document.getElementById('precioVenta').value),
+                precioCosto: parseFloat(document.getElementById('precioCosto').value) || 0,
+                categoria: document.getElementById('categoria').value,
+                fechaCreacion: new Date().toISOString()
+            };
+
+            // Verificar si el código ya existe
+            if (products.some(p => p.codigo === product.codigo)) {
+                alert('Este código de barras ya existe');
+                return;
+            }
+
+            products.push(product);
+            saveProducts();
+            renderTable();
+            updateStats();
+            this.reset();
+            document.getElementById('producto').focus();
+        });
+
+        // Formulario de edición
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const index = document.getElementById('editIndex').value;
+            
+            products[index] = {
+                producto: document.getElementById('editProducto').value.trim(),
+                codigo: document.getElementById('editCodigo').value.trim(),
+                precioVenta: parseFloat(document.getElementById('editPrecioVenta').value),
+                precioCosto: parseFloat(document.getElementById('editPrecioCosto').value) || 0,
+                categoria: document.getElementById('editCategoria').value,
+                fechaCreacion: products[index].fechaCreacion
+            };
+
+            saveProducts();
+            renderTable();
+            updateStats();
+            closeModal();
+        });
+
+        // Renderizar tabla
+        function renderTable(filter = '') {
+            const tbody = document.getElementById('productsBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            let filteredProducts = products;
+            if (filter) {
+                const filterLower = filter.toLowerCase();
+                filteredProducts = products.filter(p => 
+                    p.producto.toLowerCase().includes(filterLower) ||
+                    p.codigo.includes(filter) ||
+                    (p.categoria && p.categoria.toLowerCase().includes(filterLower))
+                );
+            }
+
+            if (filteredProducts.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            
+            tbody.innerHTML = filteredProducts.map((product, index) => {
+                const realIndex = products.indexOf(product);
+                return `
+                    <tr>
+                        <td><strong>${product.codigo}</strong></td>
+                        <td>${product.producto}</td>
+                        <td>$${product.precioVenta.toLocaleString()}</td>
+                        <td>$${product.precioCosto.toLocaleString()}</td>
+                        <td>${product.categoria || '-'}</td>
+                        <td class="barcode-cell">
+                            <svg class="barcode" data-code="${product.codigo}"></svg>
+                        </td>
+                        <td class="actions">
+                            <button class="btn btn-warning btn-small" onclick="editProduct(${realIndex})">Editar</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteProduct(${realIndex})">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Generar códigos de barras
+            generateBarcodes();
+        }
+
+        // Generar códigos de barras con JsBarcode
+        function generateBarcodes() {
+            document.querySelectorAll('.barcode').forEach(element => {
+                const code = element.getAttribute('data-code');
+                try {
+                    JsBarcode(element, code, {
+                        format: "EAN13",
+                        width: 1.5,
+                        height: 50,
+                        displayValue: true,
+                        fontSize: 12,
+                        margin: 5
+                    });
+                } catch (e) {
+                    console.error('Error generando código de barras:', code, e);
+                }
+            });
+        }
+
+        // Actualizar estadísticas
+        function updateStats() {
+            document.getElementById('totalProducts').textContent = products.length;
+            document.getElementById('totalBarcodes').textContent = products.length;
+            
+            const totalValue = products.reduce((sum, p) => sum + p.precioVenta, 0);
+            document.getElementById('totalValue').textContent = '$' + totalValue.toLocaleString();
+        }
+
+        // Guardar en localStorage
+        function saveProducts() {
+            localStorage.setItem('paulinaProducts', JSON.stringify(products));
+        }
+
+        // Buscar
+        document.getElementById('searchBox').addEventListener('input', function(e) {
+            renderTable(e.target.value);
+        });
+
+        // Editar producto
+        function editProduct(index) {
+            const product = products[index];
+            document.getElementById('editIndex').value = index;
+            document.getElementById('editProducto').value = product.producto;
+            document.getElementById('editCodigo').value = product.codigo;
+            document.getElementById('editPrecioVenta').value = product.precioVenta;
+            document.getElementById('editPrecioCosto').value = product.precioCosto;
+            document.getElementById('editCategoria').value = product.categoria || '';
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        // Eliminar producto
+        function deleteProduct(index) {
+            if (confirm('¿Está seguro de eliminar este producto?')) {
+                products.splice(index, 1);
+                saveProducts();
+                renderTable();
+                updateStats();
+            }
+        }
+
+        // Limpiar todo
+        function clearAll() {
+            if (confirm('¿Está seguro de eliminar todos los productos?')) {
+                products = [];
+                saveProducts();
+                renderTable();
+                updateStats();
+            }
+        }
+
+        // Exportar a CSV
+        function exportToCSV() {
+            if (products.length === 0) {
+                alert('No hay productos para exportar');
+                return;
+            }
+
+            const headers = ['Código', 'Producto', 'Precio Venta', 'Precio Costo', 'Categoría'];
+            const rows = products.map(p => [
+                p.codigo,
+                `"${p.producto}"`,
+                p.precioVenta,
+                p.precioCosto,
+                p.categoria || ''
+            ]);
+
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'paulina_store_productos.csv';
+            a.click();
+            
+            URL.revokeObjectURL(url);
+        }
+
+        // Imprimir códigos de barras
+        function printBarcodes() {
+            if (products.length === 0) {
+                alert('No hay productos para imprimir');
+                return;
+            }
+
+            const printContent = document.getElementById('printBarcodes');
+            printContent.innerHTML = products.map(p => `
+                <div style="display: inline-block; margin: 10px; text-align: center;">
+                    <svg class="print-barcode" data-code="${p.codigo}"></svg>
+                    <p>${p.producto}</p>
+                    <p>$${p.precioVenta.toLocaleString()}</p>
+                </div>
+            `).join('');
+
+            // Generar códigos para impresión
+            document.querySelectorAll('.print-barcode').forEach(element => {
+                const code = element.getAttribute('data-code');
+                try {
+                    JsBarcode(element, code, {
+                        format: "EAN13",
+                        width: 2,
+                        height: 80,
+                        displayValue: true,
+                        fontSize: 14,
+                        margin: 10
+                    });
+                } catch (e) {
+                    console.error('Error:', e);
+                }
+            });
+
+            window.print();
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Cerrar modal con Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Auto-generar código de barras (opcional)
+        document.getElementById('producto').addEventListener('blur', function() {
+            const codigoInput = document.getElementById('codigo');
+            if (!codigoInput.value) {
+                // Generar código aleatorio EAN-13
+                let code = '780';
+                for (let i = 0; i < 9; i++) {
+                    code += Math.floor(Math.random() * 10);
+                }
+                // Calcular dígito verificador
+                let sum = 0;
+                for (let i = 0; i < 12; i++) {
+                    sum += parseInt(code[i]) * (i % 2 === 0 ? 1 : 3);
+                }
+                const checkDigit = (10 - (sum % 10)) % 10;
+                code += checkDigit;
+                codigoInput.value = code;
+            }
+        });
+    </script>
+</body>
+</html>

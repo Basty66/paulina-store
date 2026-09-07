@@ -1,0 +1,10 @@
+node_modules/
+.env
+*.log
+.DS_Store
+codigos_barras/
+temp_barcodes/
+codigos_generados.json
+paulinastore.xlsx
+paulinastore_con_codigos.xlsx
+paulinastore_con_fuente.xlsx
