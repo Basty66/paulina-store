@@ -700,19 +700,12 @@
 
             html5QrCode = new Html5Qrcode("reader");
 
-            const scanConstraints = {
-                facingMode: { exact: "environment" },
-                focusMode: "continuous",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            };
-
             html5QrCode.start(
-                scanConstraints,
+                { facingMode: "environment" },
                 { 
                     fps: 10, 
-                    qrbox: { width: 300, height: 150 },
-                    aspectRatio: 1.5
+                    qrbox: { width: 250, height: 100 },
+                    aspectRatio: 1.0
                 },
                 onScanSuccess,
                 () => {}
@@ -860,58 +853,56 @@
         let codeScanner = null;
         let codeVideoTrack = null;
 
-        function openCodeScanner() {
+        async function openCodeScanner() {
             document.getElementById('codeScannerModal').classList.add('active');
+            document.getElementById('code-reader').innerHTML = '<p style="color: #888; padding: 20px;">Iniciando cámara...</p>';
             
             codeScanner = new Html5Qrcode("code-reader");
             
-            const constraints = {
-                facingMode: { exact: "environment" },
-                focusMode: "continuous",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+            // Simple config that works on mobile
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 100 },
+                aspectRatio: 1.0
             };
             
-            codeScanner.start(
-                constraints,
-                { 
-                    fps: 10, 
-                    qrbox: { width: 300, height: 150 },
-                    aspectRatio: 1.5,
-                    disableFlip: false,
-                    formatsToSupport: [0, 4, 8, 11, 14]
-                },
-                (decodedText) => {
-                    document.getElementById('codigo').value = decodedText;
-                    
-                    // Beep
-                    try {
-                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                        const osc = ctx.createOscillator();
-                        osc.type = 'sine';
-                        osc.frequency.value = 800;
-                        osc.connect(ctx.destination);
-                        osc.start();
-                        setTimeout(() => osc.stop(), 100);
-                    } catch(e) {}
-                    
-                    closeCodeScanner();
-                },
-                () => {}
-            ).then(() => {
-                // Get video track for tap-to-focus
-                const videoElement = document.querySelector('#code-reader video');
-                if (videoElement && videoElement.srcObject) {
-                    codeVideoTrack = videoElement.srcObject.getVideoTracks()[0];
-                }
+            try {
+                await codeScanner.start(
+                    { facingMode: "environment" },
+                    config,
+                    (decodedText) => {
+                        document.getElementById('codigo').value = decodedText;
+                        
+                        // Beep
+                        try {
+                            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                            const osc = ctx.createOscillator();
+                            osc.type = 'sine';
+                            osc.frequency.value = 800;
+                            osc.connect(ctx.destination);
+                            osc.start();
+                            setTimeout(() => osc.stop(), 100);
+                        } catch(e) {}
+                        
+                        closeCodeScanner();
+                    },
+                    () => {}
+                );
                 
-                // Tap to focus
-                const readerEl = document.getElementById('code-reader');
-                readerEl.addEventListener('click', handleTapToFocus);
-            }).catch(err => {
-                alert('Error al acceder a la cámara: ' + err);
+                // Get video track for tap-to-focus
+                setTimeout(() => {
+                    const videoElement = document.querySelector('#code-reader video');
+                    if (videoElement && videoElement.srcObject) {
+                        codeVideoTrack = videoElement.srcObject.getVideoTracks()[0];
+                    }
+                    const readerEl = document.getElementById('code-reader');
+                    readerEl.addEventListener('click', handleTapToFocus);
+                }, 500);
+                
+            } catch(err) {
+                alert('No se pudo acceder a la cámara. Verifica los permisos.');
                 closeCodeScanner();
-            });
+            }
         }
 
         function handleTapToFocus(e) {
