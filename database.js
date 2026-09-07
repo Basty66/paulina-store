@@ -11,8 +11,11 @@ const pool = new Pool({
 // Crear tabla de productos
 async function initDatabase() {
     try {
+        // Eliminar tabla existente si tiene estructura vieja
+        await pool.query('DROP TABLE IF EXISTS productos');
+        
         await pool.query(`
-            CREATE TABLE IF NOT EXISTS productos (
+            CREATE TABLE productos (
                 id SERIAL PRIMARY KEY,
                 codigo VARCHAR(13) UNIQUE NOT NULL,
                 descripcion VARCHAR(255) NOT NULL,
