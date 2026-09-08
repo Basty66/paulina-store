@@ -586,6 +586,14 @@
             .barcode-grid { gap: 20px; }
         }
 
+        /* Tour responsive */
+        @media (max-width: 360px) {
+            .tour-tooltip { padding: 14px; max-width: 280px; }
+            .tour-step-title { font-size: 0.9rem; }
+            .tour-step-desc { font-size: 0.78rem; }
+            .tour-welcome-features { grid-template-columns: 1fr; }
+        }
+
         /* Safe area for iPhone notch */
         @supports (padding: env(safe-area-inset-top)) {
             .header { padding-top: calc(20px + env(safe-area-inset-top)); }
@@ -629,22 +637,21 @@
         /* Guided Tour */
         .tour-overlay {
             position: fixed; inset: 0; z-index: 10000;
-            background: rgba(0,0,0,0.8); display: none;
-            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.75); display: none;
             animation: fadeIn 0.3s ease;
         }
-        .tour-overlay.active { display: flex; }
+        .tour-overlay.active { display: block; }
         .tour-highlight {
-            position: fixed; z-index: 10001;
+            position: absolute; z-index: 10001;
             border: 3px solid var(--accent); border-radius: var(--radius);
-            box-shadow: 0 0 0 4000px rgba(0,0,0,0.7);
+            box-shadow: 0 0 0 4px rgba(16,185,129,0.3);
             pointer-events: none; transition: all 0.4s cubic-bezier(0.4,0,0.2,1);
         }
         .tour-tooltip {
-            position: fixed; z-index: 10002;
+            position: absolute; z-index: 10002;
             background: var(--bg-card); border: 1px solid var(--border);
             border-radius: var(--radius); padding: 20px;
-            max-width: 320px; width: calc(100% - 40px);
+            max-width: 320px; width: calc(100vw - 32px);
             box-shadow: var(--shadow-lg);
             animation: fadeSlideUp 0.3s ease;
             pointer-events: auto;
@@ -2330,43 +2337,65 @@
         const TOUR_STEPS = [
             {
                 target: '.header',
+                tab: 'registro',
                 title: 'Bienvenido a Paulina Store',
-                desc: 'Esta es la barra superior con el nombre del sistema. Aqui siempre sabras en que pestana estas.',
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>',
-                position: 'bottom'
+                desc: 'Esta es la barra superior con el nombre del sistema.',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>'
             },
             {
                 target: '.nav',
+                tab: 'registro',
                 title: 'Navegacion',
-                desc: 'Usa estas pestanas para moverte entre las secciones: Registro, Escanear, Productos, Barras y Verificar.',
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
-                position: 'bottom'
+                desc: 'Usa estas pestanas para moverte entre secciones: Registro, Escanear, Productos, Barras y Verificar.',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>'
             },
             {
                 target: '#tab-registro .card',
+                tab: 'registro',
                 title: 'Registro de Producto',
-                desc: 'Aqui registras o editas productos. Puedes escribir los datos manualmente o escanear el codigo de barras para auto-completar.',
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>',
-                position: 'bottom'
+                desc: 'Aqui registras o editas productos. Escribe los datos o escanea el codigo para auto-completar.',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>'
             },
             {
                 target: '#openCodeScannerBtn',
+                tab: 'registro',
                 title: 'Escanear Codigo',
-                desc: 'Haz clic aqui para abrir la camara y escanear un codigo de barras. El codigo se escribira automaticamente en el campo Codigo.',
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>',
-                position: 'bottom'
+                desc: 'Toca la camara para escanear un codigo de barras. El codigo se escribe solo.',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>'
             },
             {
-                target: '.stats',
+                target: '#tab-escaner .card',
+                tab: 'escaner',
+                title: 'Escanear Campos',
+                desc: 'Selecciona un producto y escanea cada campo. El sistema trackea tu progreso automaticamente.',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+            },
+            {
+                target: '#tab-productos .stats',
+                tab: 'productos',
                 title: 'Estadisticas',
-                desc: 'Aqui ves el resumen: total de productos, codigos generados y valor total del inventario.',
-                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
-                position: 'bottom'
+                desc: 'Resumen: total de productos, codigos generados y valor total del inventario.',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
+            },
+            {
+                target: '#tab-barras .card',
+                tab: 'barras',
+                title: 'Codigo de Barras',
+                desc: 'Selecciona un producto para ver sus codigos y imprimir etiquetas.',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>'
+            },
+            {
+                target: '#tab-verificar .card',
+                tab: 'verificar',
+                title: 'Verificar Etiqueta',
+                desc: 'Escanea un codigo impreso para confirmar que pertenece al producto correcto.',
+                icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>'
             }
         ];
 
         let tourStep = 0;
         let tourActive = false;
+        let tourScrollHandler = null;
 
         function initTour() {
             if (localStorage.getItem('tour_done') === 'true') return;
@@ -2383,69 +2412,127 @@
 
         function skipTour() {
             localStorage.setItem('tour_done', 'true');
+            cleanupTour();
+        }
+
+        function endTour() {
+            localStorage.setItem('tour_done', 'true');
+            cleanupTour();
+        }
+
+        function cleanupTour() {
             document.getElementById('tourWelcome').classList.remove('active');
             document.getElementById('tourOverlay').classList.remove('active');
             document.getElementById('tourHighlight').style.display = 'none';
             document.getElementById('tourTooltip').style.display = 'none';
             tourActive = false;
+            if (tourScrollHandler) {
+                window.removeEventListener('scroll', tourScrollHandler);
+                tourScrollHandler = null;
+            }
         }
 
-        function endTour() {
-            localStorage.setItem('tour_done', 'true');
-            document.getElementById('tourOverlay').classList.remove('active');
-            document.getElementById('tourHighlight').style.display = 'none';
-            document.getElementById('tourTooltip').style.display = 'none';
-            tourActive = false;
+        function switchToTab(tabName) {
+            const btns = document.querySelectorAll('.nav-btn');
+            const tabMap = { registro: 0, escaner: 1, productos: 2, barras: 3, verificar: 4 };
+            const idx = tabMap[tabName];
+            if (idx !== undefined && btns[idx]) {
+                btns[idx].click();
+            }
+        }
+
+        function positionTooltip() {
+            const tooltip = document.getElementById('tourTooltip');
+            const highlight = document.getElementById('tourHighlight');
+            if (!tooltip || !highlight || tooltip.style.display === 'none') return;
+
+            const hlRect = highlight.getBoundingClientRect();
+            const ttRect = tooltip.getBoundingClientRect();
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const step = TOUR_STEPS[tourStep];
+            if (!step) return;
+
+            let left = hlRect.left + hlRect.width / 2 - ttRect.width / 2;
+            let top;
+
+            if (step.position === 'top') {
+                top = hlRect.top - ttRect.height - 12;
+            } else {
+                top = hlRect.bottom + 12;
+            }
+
+            if (top < 8) {
+                top = hlRect.top - ttRect.height - 12;
+                if (top < 8) top = 8;
+            }
+            if (top + ttRect.height > vh - 8) {
+                top = hlRect.top - ttRect.height - 12;
+            }
+
+            left = Math.max(8, Math.min(left, vw - ttRect.width - 8));
+
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
         }
 
         function showTourStep() {
+            if (!tourActive) return;
             if (tourStep >= TOUR_STEPS.length) { endTour(); return; }
 
             const step = TOUR_STEPS[tourStep];
-            const target = document.querySelector(step.target);
 
-            if (!target) { tourStep++; showTourStep(); return; }
-
-            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (step.tab) {
+                switchToTab(step.tab);
+            }
 
             setTimeout(() => {
-                const rect = target.getBoundingClientRect();
-                const highlight = document.getElementById('tourHighlight');
-                highlight.style.display = 'block';
-                highlight.style.left = (rect.left - 4) + 'px';
-                highlight.style.top = (rect.top - 4) + 'px';
-                highlight.style.width = (rect.width + 8) + 'px';
-                highlight.style.height = (rect.height + 8) + 'px';
-
-                const tooltip = document.getElementById('tourTooltip');
-                tooltip.style.display = 'block';
-
-                let dotsHtml = '';
-                for (let i = 0; i < TOUR_STEPS.length; i++) {
-                    let cls = i === tourStep ? 'active' : (i < tourStep ? 'done' : '');
-                    dotsHtml += '<div class="tour-dot ' + cls + '"></div>';
+                const target = document.querySelector(step.target);
+                if (!target) {
+                    tourStep++;
+                    showTourStep();
+                    return;
                 }
 
-                tooltip.innerHTML =
-                    '<div class="tour-step-icon">' + step.icon + '</div>' +
-                    '<div class="tour-step-num">Paso ' + (tourStep + 1) + ' de ' + TOUR_STEPS.length + '</div>' +
-                    '<div class="tour-step-title">' + step.title + '</div>' +
-                    '<div class="tour-step-desc">' + step.desc + '</div>' +
-                    '<div class="tour-progress">' + dotsHtml + '</div>' +
-                    '<div class="tour-actions">' +
-                        (tourStep > 0 ? '<button class="btn btn-outline" onclick="prevTourStep()">Atras</button>' : '<button class="btn btn-outline" onclick="endTour()">Saltar</button>') +
-                        '<button class="btn btn-primary" onclick="nextTourStep()">' + (tourStep === TOUR_STEPS.length - 1 ? 'Finalizar' : 'Siguiente') + '</button>' +
-                    '</div>';
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-                const ttRect = tooltip.getBoundingClientRect();
-                if (step.position === 'bottom') {
-                    tooltip.style.left = Math.max(10, Math.min(rect.left + rect.width/2 - ttRect.width/2, window.innerWidth - ttRect.width - 10)) + 'px';
-                    tooltip.style.top = (rect.bottom + 12) + 'px';
-                } else {
-                    tooltip.style.left = Math.max(10, Math.min(rect.left + rect.width/2 - ttRect.width/2, window.innerWidth - ttRect.width - 10)) + 'px';
-                    tooltip.style.top = (rect.top - ttRect.height - 12) + 'px';
-                }
-            }, 400);
+                setTimeout(() => {
+                    const rect = target.getBoundingClientRect();
+                    const highlight = document.getElementById('tourHighlight');
+                    highlight.style.display = 'block';
+                    highlight.style.left = Math.max(0, rect.left - 4) + 'px';
+                    highlight.style.top = Math.max(0, rect.top - 4 + window.scrollY) + 'px';
+                    highlight.style.width = (rect.width + 8) + 'px';
+                    highlight.style.height = (rect.height + 8) + 'px';
+
+                    const tooltip = document.getElementById('tourTooltip');
+                    tooltip.style.display = 'block';
+                    tooltip.style.position = 'absolute';
+
+                    let dotsHtml = '';
+                    for (let i = 0; i < TOUR_STEPS.length; i++) {
+                        let cls = i === tourStep ? 'active' : (i < tourStep ? 'done' : '');
+                        dotsHtml += '<div class="tour-dot ' + cls + '"></div>';
+                    }
+
+                    tooltip.innerHTML =
+                        '<div class="tour-step-icon">' + step.icon + '</div>' +
+                        '<div class="tour-step-num">Paso ' + (tourStep + 1) + ' de ' + TOUR_STEPS.length + '</div>' +
+                        '<div class="tour-step-title">' + step.title + '</div>' +
+                        '<div class="tour-step-desc">' + step.desc + '</div>' +
+                        '<div class="tour-progress">' + dotsHtml + '</div>' +
+                        '<div class="tour-actions">' +
+                            (tourStep > 0 ? '<button class="btn btn-outline" onclick="prevTourStep()">Atras</button>' : '<button class="btn btn-outline" onclick="endTour()">Saltar</button>') +
+                            '<button class="btn btn-primary" onclick="nextTourStep()">' + (tourStep === TOUR_STEPS.length - 1 ? 'Finalizar' : 'Siguiente') + '</button>' +
+                        '</div>';
+
+                    positionTooltip();
+
+                    if (tourScrollHandler) window.removeEventListener('scroll', tourScrollHandler);
+                    tourScrollHandler = function() { positionTooltip(); };
+                    window.addEventListener('scroll', tourScrollHandler, { passive: true });
+                }, 350);
+            }, 300);
         }
 
         function nextTourStep() {
