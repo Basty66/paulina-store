@@ -348,6 +348,7 @@
         .scan-status svg { width: 16px; height: 16px; }
         .scan-status.searching { color: var(--danger); }
         .scan-status.found { color: var(--accent); }
+        .scan-status.not-found { color: var(--danger); background: var(--danger-bg); border-radius: var(--radius-sm); }
 
         /* Floating Button */
         .fab {
@@ -405,6 +406,59 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+
+        /* Torch button */
+        .torch-btn {
+            position: absolute; top: 12px; right: 12px; z-index: 20;
+            width: 40px; height: 40px; border-radius: 50%;
+            background: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.3);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .torch-btn.active { background: var(--warning); border-color: var(--warning); }
+        .torch-btn svg { width: 20px; height: 20px; color: white; }
+
+        /* Verify result */
+        .verify-result {
+            margin-top: 16px; padding: 20px; border-radius: var(--radius);
+            text-align: center; animation: fadeSlideUp 0.3s ease;
+        }
+        .verify-result.match {
+            background: var(--accent-bg); border: 2px solid var(--accent);
+        }
+        .verify-result.no-match {
+            background: var(--danger-bg); border: 2px solid var(--danger);
+        }
+        .verify-result-icon { font-size: 3rem; margin-bottom: 10px; }
+        .verify-result h3 { font-size: 1.1rem; margin-bottom: 8px; }
+        .verify-result p { color: var(--text-secondary); font-size: 0.85rem; }
+        .verify-result-detail {
+            margin-top: 12px; padding: 12px; border-radius: var(--radius-sm);
+            background: var(--bg-elevated); text-align: left;
+        }
+        .verify-result-detail .vr-row {
+            display: flex; justify-content: space-between; padding: 6px 0;
+            border-bottom: 1px solid var(--border); font-size: 0.8rem;
+        }
+        .verify-result-detail .vr-row:last-child { border-bottom: none; }
+        .verify-result-detail .vr-label { color: var(--text-muted); }
+        .verify-result-detail .vr-value { color: var(--text-primary); font-weight: 600; }
+
+        /* Duplicate badge */
+        .duplicate-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--danger-bg); color: var(--danger);
+            padding: 2px 8px; border-radius: 999px; font-size: 0.65rem; font-weight: 700;
+        }
+        .duplicate-banner {
+            background: var(--danger-bg); border: 1px solid var(--danger);
+            border-radius: var(--radius); padding: 12px 16px;
+            margin-bottom: 16px; font-size: 0.85rem; color: var(--danger);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .product-card.duplicate-highlight {
+            border-color: var(--danger) !important;
+        }
 
         /* ===== RESPONSIVE ===== */
 
@@ -637,6 +691,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>
                 Barras
             </button>
+            <button class="nav-btn" onclick="showTab('verificar', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                Verificar
+            </button>
         </nav>
 
         <div class="content">
@@ -842,6 +900,43 @@
                     <div class="barcode-grid" id="barcodeGrid"></div>
                 </div>
             </div>
+
+            <!-- Verificar -->
+            <div id="tab-verificar" class="panel">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                    Verificar Etiqueta
+                </h2>
+                <div class="card">
+                    <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px;">
+                        Escanea un codigo de barras impreso para verificar a que producto pertenece.
+                    </p>
+                    <div class="scanner-box-footer">
+                        <button class="btn btn-primary" id="btn-verify-start" onclick="startVerifyScanner()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            Iniciar Verificacion
+                        </button>
+                        <button class="btn btn-danger" id="btn-verify-stop" onclick="stopVerifyScanner()" style="display:none;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                            Detener
+                        </button>
+                    </div>
+                    <div id="verify-camera-area" style="display:none;margin-top:12px;">
+                        <div style="position:relative;border-radius:var(--radius);overflow:hidden;background:#000;">
+                            <div id="verify-reader"></div>
+                            <div class="scan-guide"></div>
+                            <div class="torch-btn" id="verifyTorchBtn" onclick="toggleVerifyTorch()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+                            </div>
+                        </div>
+                        <div id="verifyStatus" class="scan-status searching">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            Apunta la camara al codigo de barras...
+                        </div>
+                    </div>
+                    <div id="verifyResult"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -915,6 +1010,7 @@
         let selectedProduct = null;
         let html5QrCode = null;
         let scanCooldown = false;
+        let torchOn = false;
 
         let scanSession = { productId: null, scannedFields: {}, allAlerted: false };
 
@@ -942,6 +1038,7 @@
             if (name === 'productos') loadProductList();
             if (name === 'barras') populateSelectBar();
             if (name === 'escaner') { populateSelectScan(); stopCamera(); }
+            if (name === 'verificar') { stopVerifyScanner(); }
             updateSummaryBtn();
         }
 
@@ -989,6 +1086,9 @@
                 stockCritico: parseInt(document.getElementById('stockCritico').value) || 0
             };
             try {
+                const dupes = checkDuplicateOnSave(data.codigo, id || null);
+                if (dupes && !confirm('Ya existe ' + dupes.length + ' producto(s) con codigo "' + data.codigo + '". Deseas guardar de todas formas?')) return;
+
                 const r = await fetch(id ? `${API_URL}/${id}` : API_URL, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (r.ok) { alert(id ? 'Actualizado' : 'Agregado'); this.reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').textContent = 'Registro de Producto'; await loadProducts(); }
             } catch (e) { alert('Error al guardar'); }
@@ -1204,9 +1304,20 @@
             container.innerHTML = '';
             html5QrCode = new Html5Qrcode("reader");
 
+            const scanAreaWidth = Math.min(window.innerWidth - 40, 350);
+            const scanAreaHeight = Math.round(scanAreaWidth * 0.35);
+
             html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 100 }, aspectRatio: 1.0 },
+                { facingMode: { ideal: "environment" } },
+                {
+                    fps: 15,
+                    qrbox: { width: scanAreaWidth, height: scanAreaHeight },
+                    aspectRatio: window.innerWidth < 600 ? 1.7778 : 1.3333,
+                    formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                    rememberLastUsedCamera: true,
+                    showTorchButtonIfSupported: false
+                },
                 onScanSuccess,
                 () => {}
             ).then(() => {
@@ -1340,6 +1451,8 @@
             if (readyList.length === 0 && pendingList.length === 0) {
                 pendingSection.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No se encontraron productos</p></div>';
             }
+
+            setTimeout(() => { showDuplicateBanner(); markDuplicateCards(); }, 50);
         }
 
         function filterProducts() {
@@ -1476,11 +1589,17 @@
 
             codeScanner = new Html5Qrcode("code-reader");
 
+            const scanAreaWidth = Math.min(window.innerWidth - 40, 350);
+            const scanAreaHeight = Math.round(scanAreaWidth * 0.35);
+
             const config = {
-                fps: 10,
-                qrbox: { width: 250, height: 100 },
-                aspectRatio: 1.0,
-                formatsToSupport: [0, 2, 4, 8, 14]
+                fps: 15,
+                qrbox: { width: scanAreaWidth, height: scanAreaHeight },
+                aspectRatio: window.innerWidth < 600 ? 1.7778 : 1.3333,
+                formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                rememberLastUsedCamera: true,
+                showTorchButtonIfSupported: false
             };
 
             try {
@@ -1552,6 +1671,197 @@
             document.getElementById('scannerFrame').className = 'scanner-frame';
             document.getElementById('scanStatus').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Buscando codigo...';
             document.getElementById('scanStatus').className = 'scan-status searching';
+        }
+
+        // ===== VERIFICATION SCANNER =====
+        let verifyScanner = null;
+        let verifyTorchTrack = null;
+        let verifyTorchOn = false;
+
+        async function startVerifyScanner() {
+            document.getElementById('verify-camera-area').style.display = 'block';
+            document.getElementById('btn-verify-start').style.display = 'none';
+            document.getElementById('btn-verify-stop').style.display = 'inline-flex';
+            document.getElementById('verifyStatus').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Apunta la camara al codigo de barras...';
+            document.getElementById('verifyStatus').className = 'scan-status searching';
+            document.getElementById('verifyResult').innerHTML = '';
+
+            verifyScanner = new Html5Qrcode("verify-reader");
+
+            const scanAreaWidth = Math.min(window.innerWidth - 40, 350);
+            const scanAreaHeight = Math.round(scanAreaWidth * 0.35);
+
+            try {
+                await verifyScanner.start(
+                    { facingMode: { ideal: "environment" } },
+                    {
+                        fps: 15,
+                        qrbox: { width: scanAreaWidth, height: scanAreaHeight },
+                        aspectRatio: window.innerWidth < 600 ? 1.7778 : 1.3333,
+                        formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+                        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                        rememberLastUsedCamera: true
+                    },
+                    (decodedText) => onVerifyScanSuccess(decodedText),
+                    () => {}
+                );
+
+                setTimeout(() => {
+                    const videoEl = document.querySelector('#verify-reader video');
+                    if (videoEl && videoEl.srcObject) {
+                        verifyTorchTrack = videoEl.srcObject.getVideoTracks()[0];
+                    }
+                }, 500);
+            } catch(err) {
+                alert('No se pudo acceder a la camara. Verifica los permisos.');
+                stopVerifyScanner();
+            }
+        }
+
+        function onVerifyScanSuccess(decodedText) {
+            if (verifyCooldown) return;
+            verifyCooldown = true;
+            setTimeout(() => { verifyCooldown = false; }, 2000);
+
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                osc.type = 'sine'; osc.frequency.value = 1000;
+                osc.connect(ctx.destination); osc.start();
+                setTimeout(() => osc.stop(), 150);
+            } catch(e) {}
+
+            const val = decodedText.trim();
+            let matchProduct = null;
+            let matchField = null;
+
+            for (const p of products) {
+                for (const f of FIELDS) {
+                    const fieldVal = String(f.getValue(p)).trim();
+                    if (val === fieldVal) {
+                        matchProduct = p;
+                        matchField = f;
+                        break;
+                    }
+                }
+                if (matchProduct) break;
+            }
+
+            const resultDiv = document.getElementById('verifyResult');
+            const statusEl = document.getElementById('verifyStatus');
+
+            if (matchProduct) {
+                statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Producto encontrado!';
+                statusEl.className = 'scan-status found';
+
+                resultDiv.innerHTML =
+                    '<div class="verify-result match">' +
+                        '<div class="verify-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
+                        '<h3 style="color:var(--accent);">Coincidencia Encontrada</h3>' +
+                        '<p>Codigo: <strong>' + val + '</strong></p>' +
+                        '<div class="verify-result-detail">' +
+                            '<div class="vr-row"><span class="vr-label">Producto</span><span class="vr-value">' + truncate(matchProduct.descripcion, 30) + '</span></div>' +
+                            '<div class="vr-row"><span class="vr-label">Campo</span><span class="vr-value">' + matchField.label + '</span></div>' +
+                            '<div class="vr-row"><span class="vr-label">Codigo</span><span class="vr-value">' + matchProduct.codigo + '</span></div>' +
+                            '<div class="vr-row"><span class="vr-label">Precio Venta</span><span class="vr-value">$' + parseInt(matchProduct.precio_venta) + '</span></div>' +
+                            '<div class="vr-row"><span class="vr-label">Familia</span><span class="vr-value">' + (matchProduct.familia || '-') + '</span></div>' +
+                        '</div>' +
+                    '</div>';
+            } else {
+                statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Sin coincidencia';
+                statusEl.className = 'scan-status not-found';
+
+                resultDiv.innerHTML =
+                    '<div class="verify-result no-match">' +
+                        '<div class="verify-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>' +
+                        '<h3 style="color:var(--danger);">Sin Coincidencia</h3>' +
+                        '<p>El codigo <strong>' + val + '</strong> no pertenece a ningun producto registrado.</p>' +
+                        '<p style="margin-top:8px;font-size:0.75rem;">Verifica que el codigo este en la base de datos.</p>' +
+                    '</div>';
+            }
+        }
+
+        let verifyCooldown = false;
+
+        function stopVerifyScanner() {
+            if (verifyScanner) {
+                verifyScanner.stop().then(() => { verifyScanner.clear(); verifyScanner = null; }).catch(() => {});
+                verifyScanner = null;
+            }
+            verifyTorchTrack = null;
+            verifyTorchOn = false;
+            document.getElementById('btn-verify-start').style.display = 'inline-flex';
+            document.getElementById('btn-verify-stop').style.display = 'none';
+            document.getElementById('verify-camera-area').style.display = 'none';
+            const torchBtn = document.getElementById('verifyTorchBtn');
+            if (torchBtn) torchBtn.classList.remove('active');
+        }
+
+        function toggleVerifyTorch() {
+            if (!verifyTorchTrack) return;
+            verifyTorchOn = !verifyTorchOn;
+            verifyTorchTrack.applyConstraints({ advanced: [{ torch: verifyTorchOn }] }).catch(() => {});
+            document.getElementById('verifyTorchBtn').classList.toggle('active', verifyTorchOn);
+        }
+
+        // ===== DUPLICATE DETECTION =====
+        function findDuplicateCodes() {
+            const codeMap = {};
+            products.forEach(p => {
+                const c = p.codigo;
+                if (c) {
+                    if (!codeMap[c]) codeMap[c] = [];
+                    codeMap[c].push(p);
+                }
+            });
+            const dupes = {};
+            for (const [code, prods] of Object.entries(codeMap)) {
+                if (prods.length > 1) dupes[code] = prods;
+            }
+            return dupes;
+        }
+
+        function checkDuplicateOnSave(codigo, excludeId) {
+            if (!codigo) return null;
+            const dupes = products.filter(p => p.codigo === codigo && p.id != excludeId);
+            return dupes.length > 0 ? dupes : null;
+        }
+
+        function showDuplicateBanner() {
+            const dupes = findDuplicateCodes();
+            const count = Object.keys(dupes).length;
+            if (count > 0) {
+                const existing = document.getElementById('duplicateBanner');
+                if (!existing) {
+                    const banner = document.createElement('div');
+                    banner.id = 'duplicateBanner';
+                    banner.className = 'duplicate-banner';
+                    banner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + count + ' codigo(s) duplicado(s) encontrado(s)';
+                    const pendingSection = document.getElementById('pendingSection');
+                    pendingSection.parentNode.insertBefore(banner, pendingSection);
+                }
+            } else {
+                const existing = document.getElementById('duplicateBanner');
+                if (existing) existing.remove();
+            }
+        }
+
+        function markDuplicateCards() {
+            const dupes = findDuplicateCodes();
+            document.querySelectorAll('.product-card').forEach(card => {
+                const codeEl = card.querySelector('.product-card-code');
+                if (!codeEl) return;
+                const code = codeEl.textContent;
+                if (dupes[code]) {
+                    card.classList.add('duplicate-highlight');
+                    if (!card.querySelector('.duplicate-badge')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'duplicate-badge';
+                        badge.textContent = 'DUPLICADO';
+                        codeEl.parentNode.insertBefore(badge, codeEl.nextSibling);
+                    }
+                }
+            });
         }
 
         loadProducts();
