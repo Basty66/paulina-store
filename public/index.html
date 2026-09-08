@@ -1540,27 +1540,21 @@
             const scanAreaWidth = Math.min(window.innerWidth - 40, 350);
             const scanAreaHeight = Math.round(scanAreaWidth * 0.35);
 
-            const maxConstraints = {
-                fps: { ideal: 120, max: 120 },
-                width: { ideal: 3840, max: 3840 },
-                height: { ideal: 2160, max: 2160 }
-            };
-
             html5QrCode.start(
                 { facingMode: { ideal: currentFacingMode } },
                 {
-                    fps: 120,
+                    fps: 30,
                     qrbox: { width: scanAreaWidth, height: scanAreaHeight },
                     aspectRatio: window.innerWidth < 600 ? 1.7778 : 1.3333,
-                    formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-                    rememberLastUsedCamera: true,
-                    showTorchButtonIfSupported: false,
-                    focusMode: "continuous"
+                    formatsToSupport: [0, 2, 4, 8, 14],
+                    videoConstraints: {
+                        facingMode: { ideal: currentFacingMode },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    }
                 },
                 onScanSuccess,
-                () => {},
-                maxConstraints
+                () => {}
             ).then(() => {
                 document.getElementById('btn-start').style.display = 'none';
                 document.getElementById('btn-stop').style.display = 'inline-flex';
@@ -1574,7 +1568,7 @@
                     });
                 }, 600);
             }).catch(err => {
-                document.getElementById('permDeniedMsg').style.display = 'block';
+                console.error('Camera error:', err);
                 showPermModal(false);
             });
         }
@@ -1847,20 +1841,16 @@
             const scanAreaWidth = Math.min(window.innerWidth - 40, 350);
             const scanAreaHeight = Math.round(scanAreaWidth * 0.35);
 
-            const maxConstraints = {
-                fps: { ideal: 120, max: 120 },
-                width: { ideal: 3840, max: 3840 },
-                height: { ideal: 2160, max: 2160 }
-            };
-
             const config = {
-                fps: 120,
+                fps: 30,
                 qrbox: { width: scanAreaWidth, height: scanAreaHeight },
                 aspectRatio: window.innerWidth < 600 ? 1.7778 : 1.3333,
-                formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-                rememberLastUsedCamera: true,
-                showTorchButtonIfSupported: false
+                formatsToSupport: [0, 2, 4, 8, 14],
+                videoConstraints: {
+                    facingMode: { ideal: currentFacingMode },
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }
             };
 
             try {
@@ -1893,8 +1883,7 @@
                             setTimeout(() => { codigoInput.classList.remove('scanned'); }, 3000);
                         }, 1200);
                     },
-                    () => {},
-                    maxConstraints
+                    () => {}
                 );
 
                 setTimeout(() => {
@@ -1903,12 +1892,8 @@
                         codeVideoTrack = videoElement.srcObject.getVideoTracks()[0];
                         activeVideoTrack = codeVideoTrack;
                     }
-                    const readerEl = document.getElementById('code-reader');
-                    readerEl.addEventListener('click', handleTapToFocus);
                     showSwitchCameraBtn('code-reader');
-                    setTimeout(() => {
-                        setupTapToFocus('code-reader', () => codeVideoTrack);
-                    }, 200);
+                    setupTapToFocus('code-reader', () => codeVideoTrack);
                 }, 500);
 
             } catch(err) {
@@ -1963,26 +1948,22 @@
             const scanAreaWidth = Math.min(window.innerWidth - 40, 350);
             const scanAreaHeight = Math.round(scanAreaWidth * 0.35);
 
-            const maxConstraints = {
-                fps: { ideal: 120, max: 120 },
-                width: { ideal: 3840, max: 3840 },
-                height: { ideal: 2160, max: 2160 }
-            };
-
             try {
                 await verifyScanner.start(
                     { facingMode: { ideal: currentFacingMode } },
                     {
-                        fps: 120,
+                        fps: 30,
                         qrbox: { width: scanAreaWidth, height: scanAreaHeight },
                         aspectRatio: window.innerWidth < 600 ? 1.7778 : 1.3333,
-                        formatsToSupport: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-                        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-                        rememberLastUsedCamera: true
+                        formatsToSupport: [0, 2, 4, 8, 14],
+                        videoConstraints: {
+                            facingMode: { ideal: currentFacingMode },
+                            width: { ideal: 1920 },
+                            height: { ideal: 1080 }
+                        }
                     },
                     (decodedText) => onVerifyScanSuccess(decodedText),
-                    () => {},
-                    maxConstraints
+                    () => {}
                 );
 
                 setTimeout(() => {
@@ -2004,7 +1985,7 @@
         function onVerifyScanSuccess(decodedText) {
             if (verifyCooldown) return;
             verifyCooldown = true;
-            setTimeout(() => { verifyCooldown = false; }, 2000);
+            setTimeout(() => { verifyCooldown = false; }, 1500);
 
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2017,17 +1998,52 @@
             const val = decodedText.trim();
             let matchProduct = null;
             let matchField = null;
+            let matchType = '';
 
             for (const p of products) {
-                for (const f of FIELDS) {
-                    const fieldVal = String(f.getValue(p)).trim();
-                    if (val === fieldVal) {
+                if (String(p.codigo).trim() === val) {
+                    matchProduct = p;
+                    matchField = FIELDS.find(f => f.key === 'codigo');
+                    matchType = 'exact';
+                    break;
+                }
+            }
+
+            if (!matchProduct) {
+                for (const p of products) {
+                    if (String(p.descripcion).trim().toLowerCase() === val.toLowerCase()) {
                         matchProduct = p;
-                        matchField = f;
+                        matchField = FIELDS.find(f => f.key === 'descripcion');
+                        matchType = 'exact';
                         break;
                     }
                 }
-                if (matchProduct) break;
+            }
+
+            if (!matchProduct) {
+                for (const p of products) {
+                    for (const f of FIELDS) {
+                        const fieldVal = String(f.getValue(p)).trim();
+                        if (fieldVal === val) {
+                            matchProduct = p;
+                            matchField = f;
+                            matchType = 'field';
+                            break;
+                        }
+                    }
+                    if (matchProduct) break;
+                }
+            }
+
+            if (!matchProduct) {
+                for (const p of products) {
+                    if (String(p.codigo).includes(val) || val.includes(String(p.codigo))) {
+                        matchProduct = p;
+                        matchField = FIELDS.find(f => f.key === 'codigo');
+                        matchType = 'partial';
+                        break;
+                    }
+                }
             }
 
             const resultDiv = document.getElementById('verifyResult');
@@ -2037,11 +2053,14 @@
                 statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Producto encontrado!';
                 statusEl.className = 'scan-status found';
 
+                const matchLabel = matchType === 'exact' ? 'Coincidencia exacta' :
+                                   matchType === 'partial' ? 'Coincidencia parcial' : 'Valor encontrado';
+
                 resultDiv.innerHTML =
                     '<div class="verify-result match">' +
                         '<div class="verify-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
-                        '<h3 style="color:var(--accent);">Coincidencia Encontrada</h3>' +
-                        '<p>Codigo: <strong>' + val + '</strong></p>' +
+                        '<h3 style="color:var(--accent);">' + matchLabel + '</h3>' +
+                        '<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">Escaneado: <strong>' + val + '</strong></p>' +
                         '<div class="verify-result-detail">' +
                             '<div class="vr-row"><span class="vr-label">Producto</span><span class="vr-value">' + truncate(matchProduct.descripcion, 30) + '</span></div>' +
                             '<div class="vr-row"><span class="vr-label">Campo</span><span class="vr-value">' + matchField.label + '</span></div>' +
@@ -2058,8 +2077,8 @@
                     '<div class="verify-result no-match">' +
                         '<div class="verify-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>' +
                         '<h3 style="color:var(--danger);">Sin Coincidencia</h3>' +
-                        '<p>El codigo <strong>' + val + '</strong> no pertenece a ningun producto registrado.</p>' +
-                        '<p style="margin-top:8px;font-size:0.75rem;">Verifica que el codigo este en la base de datos.</p>' +
+                        '<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;">Escaneado: <strong>' + val + '</strong></p>' +
+                        '<p style="font-size:0.8rem;">Este codigo no pertenece a ningun producto registrado.</p>' +
                     '</div>';
             }
         }
@@ -2083,29 +2102,25 @@
                 activeVideoTrack = track;
 
                 const caps = track.getCapabilities ? track.getCapabilities() : {};
-                const settings = track.getSettings ? track.getSettings() : {};
 
-                const maxW = caps.width ? caps.width.max : 3840;
-                const maxH = caps.height ? caps.height.max : 2160;
-                const maxFps = caps.frameRate ? caps.frameRate.max : 120;
+                const advancedConstraints = [{}];
 
-                const advancedConstraints = [{
-                    width: { ideal: maxW },
-                    height: { ideal: maxH },
-                    frameRate: { ideal: maxFps }
-                }];
-
+                if (caps.width && caps.width.max > 1920) {
+                    advancedConstraints[0].width = { ideal: 1920 };
+                }
+                if (caps.height && caps.height.max > 1080) {
+                    advancedConstraints[0].height = { ideal: 1080 };
+                }
+                if (caps.frameRate && caps.frameRate.max > 30) {
+                    advancedConstraints[0].frameRate = { ideal: 30 };
+                }
                 if (caps.focusMode && caps.focusMode.includes('continuous')) {
                     advancedConstraints[0].focusMode = 'continuous';
                 }
-                if (caps.exposureMode && caps.exposureMode.includes('continuous')) {
-                    advancedConstraints[0].exposureMode = 'continuous';
-                }
-                if (caps.whiteBalanceMode && caps.whiteBalanceMode.includes('continuous')) {
-                    advancedConstraints[0].whiteBalanceMode = 'continuous';
-                }
 
-                await track.applyConstraints({ advanced: advancedConstraints });
+                if (Object.keys(advancedConstraints[0]).length > 0) {
+                    await track.applyConstraints({ advanced: advancedConstraints });
+                }
 
                 showSwitchCameraBtn(readerId);
             } catch(e) {}
@@ -2236,9 +2251,8 @@
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: { ideal: "environment" },
-                        width: { ideal: 3840 },
-                        height: { ideal: 2160 },
-                        frameRate: { ideal: 120 }
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     }
                 });
                 stream.getTracks().forEach(t => t.stop());
