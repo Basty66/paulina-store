@@ -808,7 +808,7 @@
         let html5QrCode = null;
         let scanCooldown = false;
 
-        let scanSession = { productId: null, scannedFields: {} };
+        let scanSession = { productId: null, scannedFields: {}, allAlerted: false };
 
         const FIELDS = [
             { key: 'codigo', label: 'CODIGO PRODUCTO', getValue: p => p.codigo },
@@ -983,12 +983,6 @@
             updateSummaryBtn();
         }
 
-        function selectField(fieldKey) {
-            document.querySelectorAll('.field-chip').forEach(el => el.style.outline = 'none');
-            const el = document.getElementById('field-' + fieldKey);
-            if (el) el.style.outline = '2px solid #f59e0b';
-        }
-
         function markFieldScanned(fieldKey) {
             scanSession.scannedFields[fieldKey] = true;
             saveScanProgress();
@@ -1005,9 +999,11 @@
             document.getElementById('progressCount').textContent = scanned + '/' + total;
             document.getElementById('progressFill').style.width = pct + '%';
 
-            if (scanned === total && scanned > 0) {
+            if (scanned === total && scanned > 0 && !scanSession.allAlerted) {
+                scanSession.allAlerted = true;
                 alert('¡TODOS LOS CAMPOS ESCANEADOS!\nProducto: ' + selectedProduct.descripcion);
             }
+            if (scanned < total) scanSession.allAlerted = false;
         }
 
         function updateSummaryBtn() {
@@ -1242,12 +1238,6 @@
             loadProductList();
         }
 
-        function selectProductForScan(id) {
-            document.getElementById('selectProductScan').value = id;
-            showTab('escaner', document.querySelectorAll('.nav-btn')[1]);
-            startScanSession();
-        }
-
         function editProduct(id) {
             const p = products.find(x => x.id == id);
             if (!p) return;
@@ -1277,6 +1267,7 @@
                 const res = await fetch(API_URL + '/' + id, { method: 'DELETE' });
                 if (res.ok) {
                     localStorage.removeItem('scan_' + id);
+                    localStorage.removeItem('ready_' + id);
                     alert('Producto eliminado');
                     await loadProducts();
                     loadProductList();
