@@ -178,6 +178,44 @@
         .product-card-progress.partial { background: var(--danger-bg); color: var(--danger); }
         .product-card-actions { display: flex; flex-direction: column; gap: 4px; }
 
+        .btn-ready {
+            width: 36px; height: 36px; border-radius: var(--radius-sm);
+            border: 2px solid var(--border); background: var(--bg-elevated);
+            color: var(--text-muted); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-ready svg { width: 18px; height: 18px; }
+        .btn-ready:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-ready.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+        .search-box {
+            position: relative; margin-bottom: 12px;
+        }
+        .search-box input {
+            width: 100%; padding: 10px 12px 10px 38px;
+            border: 1px solid var(--border); border-radius: var(--radius-sm);
+            font-size: 0.85rem; font-family: inherit;
+            background: var(--bg-elevated); color: var(--text-primary);
+        }
+        .search-box input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+        .search-box svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
+
+        .section-header {
+            display: flex; align-items: center; gap: 8px;
+            margin: 16px 0 10px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        .section-header h3 { font-size: 0.85rem; font-weight: 600; }
+        .section-header .count {
+            font-size: 0.7rem; font-weight: 700; padding: 2px 8px;
+            border-radius: 999px; background: var(--bg-elevated); color: var(--text-muted);
+        }
+        .section-header.ready h3 { color: var(--accent); }
+        .section-header.ready .count { background: var(--accent-bg); color: var(--accent); }
+        .section-header.pending h3 { color: var(--warning); }
+        .section-header.pending .count { background: rgba(245,158,11,0.1); color: var(--warning); }
+
         /* Progress */
         .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .progress-label { font-size: 0.8rem; color: var(--text-secondary); }
@@ -337,10 +375,10 @@
         /* Print */
         .print-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         @media (min-width: 600px) { .print-grid { grid-template-columns: repeat(3, 1fr); } }
-        .print-item { background: white; padding: 10px; border-radius: var(--radius-sm); text-align: center; }
-        .print-item h5 { font-size: 0.6rem; color: #666; text-transform: uppercase; margin-bottom: 4px; }
-        .print-item svg { max-width: 100%; }
-        .print-item .val { font-size: 0.6rem; color: #999; margin-top: 3px; font-family: monospace; }
+        .print-item { background: white; padding: 12px; border-radius: var(--radius-sm); text-align: center; border: 1px solid #e5e5e5; }
+        .print-item h5 { font-size: 0.65rem; color: #333; text-transform: uppercase; margin-bottom: 6px; font-weight: 700; letter-spacing: 0.03em; }
+        .print-item svg { max-width: 100%; display: block; margin: 0 auto; }
+        .print-item .val { font-size: 0.7rem; color: #555; margin-top: 6px; font-family: monospace; font-weight: 600; }
 
         /* Info Box */
         .info-box {
@@ -363,7 +401,15 @@
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
 
         /* Print styles */
-        @media print { body * { display: none !important; } .print-modal, .print-modal * { display: block !important; } .print-modal { position: absolute; top: 0; left: 0; width: 100%; background: #fff; padding: 20px; } }
+        @media print {
+            body * { visibility: hidden !important; }
+            #printModal, #printModal * { visibility: visible !important; }
+            #printModal {
+                position: fixed; top: 0; left: 0; width: 100%;
+                background: white; padding: 20px; z-index: 9999;
+            }
+            .modal-header, .modal-footer { display: none !important; }
+        }
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
@@ -658,7 +704,14 @@
                         <div class="stat-label">Valor</div>
                     </div>
                 </div>
-                <div class="product-grid" id="productList"></div>
+
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="searchProduct" placeholder="Buscar por nombre o codigo..." oninput="filterProducts()">
+                </div>
+
+                <div id="readySection"></div>
+                <div id="pendingSection"></div>
             </div>
 
             <!-- Barras -->
@@ -1112,35 +1165,81 @@
         }
 
         // ===== PRODUCT LIST =====
-        function loadProductList() {
-            const list = document.getElementById('productList');
-            list.innerHTML = '';
-            products.forEach(p => {
-                const scanned = loadScanProgressById(p.id);
-                const count = Object.keys(scanned).length;
-                const complete = count === 12;
+        function isProductReady(id) {
+            return localStorage.getItem('ready_' + id) === 'true';
+        }
 
-                const card = document.createElement('div');
-                card.className = 'product-card';
-                card.onclick = function(e) {
-                    if (e.target.closest('.product-card-actions')) return;
-                };
-                card.innerHTML =
-                    '<div class="product-card-body">' +
-                        '<div class="product-card-name" title="' + p.descripcion + '">' + truncate(p.descripcion, 32) + '</div>' +
-                        '<div class="product-card-code">' + p.codigo + '</div>' +
-                        '<div class="product-card-price">$' + parseInt(p.precio_venta) + '</div>' +
-                        '<div class="product-card-progress ' + (complete ? 'complete' : 'partial') + '">' +
-                            (complete ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>') +
-                            count + '/12' +
-                        '</div>' +
+        function toggleProductReady(id, e) {
+            e.stopPropagation();
+            const current = isProductReady(id);
+            localStorage.setItem('ready_' + id, !current);
+            loadProductList();
+        }
+
+        function renderProductCard(p) {
+            const scanned = loadScanProgressById(p.id);
+            const count = Object.keys(scanned).length;
+            const complete = count === 12;
+            const ready = isProductReady(p.id);
+
+            const card = document.createElement('div');
+            card.className = 'product-card';
+            card.innerHTML =
+                '<button class="btn-ready ' + (ready ? 'active' : '') + '" onclick="toggleProductReady(' + p.id + ', event)" title="' + (ready ? 'Marcar como pendiente' : 'Marcar como listo') + '">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>' +
+                '</button>' +
+                '<div class="product-card-body">' +
+                    '<div class="product-card-name" title="' + p.descripcion + '">' + truncate(p.descripcion, 32) + '</div>' +
+                    '<div class="product-card-code">' + p.codigo + '</div>' +
+                    '<div class="product-card-price">$' + parseInt(p.precio_venta) + '</div>' +
+                    '<div class="product-card-progress ' + (complete ? 'complete' : 'partial') + '">' +
+                        (complete ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/></svg>') +
+                        count + '/12' +
                     '</div>' +
-                    '<div class="product-card-actions">' +
-                        '<button class="btn-icon" onclick="editProduct(' + p.id + ')" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
-                        '<button class="btn-icon danger" onclick="deleteProduct(' + p.id + ')" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
-                    '</div>';
-                list.appendChild(card);
+                '</div>' +
+                '<div class="product-card-actions">' +
+                    '<button class="btn-icon" onclick="editProduct(' + p.id + ')" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+                    '<button class="btn-icon danger" onclick="deleteProduct(' + p.id + ')" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>' +
+                '</div>';
+            return card;
+        }
+
+        function loadProductList() {
+            const search = (document.getElementById('searchProduct')?.value || '').toLowerCase();
+            const readySection = document.getElementById('readySection');
+            const pendingSection = document.getElementById('pendingSection');
+            readySection.innerHTML = '';
+            pendingSection.innerHTML = '';
+
+            const readyList = [];
+            const pendingList = [];
+
+            products.forEach(p => {
+                const match = !search || p.descripcion.toLowerCase().includes(search) || p.codigo.includes(search);
+                if (!match) return;
+                if (isProductReady(p.id)) readyList.push(p);
+                else pendingList.push(p);
             });
+
+            if (readyList.length > 0) {
+                readySection.innerHTML = '<div class="section-header ready"><h3>Listos</h3><span class="count">' + readyList.length + '</span></div><div class="product-grid"></div>';
+                const grid = readySection.querySelector('.product-grid');
+                readyList.forEach(p => grid.appendChild(renderProductCard(p)));
+            }
+
+            if (pendingList.length > 0) {
+                pendingSection.innerHTML = '<div class="section-header pending"><h3>Pendientes</h3><span class="count">' + pendingList.length + '</span></div><div class="product-grid"></div>';
+                const grid = pendingSection.querySelector('.product-grid');
+                pendingList.forEach(p => grid.appendChild(renderProductCard(p)));
+            }
+
+            if (readyList.length === 0 && pendingList.length === 0) {
+                pendingSection.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No se encontraron productos</p></div>';
+            }
+        }
+
+        function filterProducts() {
+            loadProductList();
         }
 
         function selectProductForScan(id) {
@@ -1191,6 +1290,22 @@
         }
 
         // ===== BARCODES =====
+        function generateBarcode(svgId, value) {
+            const formats = ["CODE128", "CODE39", "EAN13", "EAN8"];
+            for (const fmt of formats) {
+                try {
+                    JsBarcode('#' + svgId, value, { format: fmt, width: 1.5, height: 50, displayValue: true, fontSize: 11, margin: 5 });
+                    return true;
+                } catch (e) { /* try next format */ }
+            }
+            const svg = document.getElementById(svgId);
+            if (svg) {
+                svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="#ef4444" font-size="10" font-family="sans-serif">Sin codigo</text>';
+                svg.setAttribute('viewBox', '0 0 200 60');
+            }
+            return false;
+        }
+
         function showProductBarcodes() {
             const pid = document.getElementById('selectProductBar').value;
             const box = document.getElementById('barcodeContainer');
@@ -1203,20 +1318,13 @@
 
             grid.innerHTML = '';
             FIELDS.forEach(f => {
+                const val = f.getValue(product);
                 const card = document.createElement('div');
                 card.className = 'barcode-card';
-                card.innerHTML = '<div class="barcode-card-label">' + f.label + '</div><svg id="bc-' + f.key + '"></svg><div class="barcode-card-value">' + f.getValue(product) + '</div>';
+                card.innerHTML = '<div class="barcode-card-label">' + f.label + '</div><svg id="bc-' + f.key + '"></svg><div class="barcode-card-value">' + val + '</div>';
                 grid.appendChild(card);
 
-                setTimeout(() => {
-                    try {
-                        JsBarcode('#bc-' + f.key, f.getValue(product), { format: "CODE128", width: 1.5, height: 50, displayValue: true, fontSize: 11, margin: 5 });
-                    } catch (e) {
-                        try {
-                            JsBarcode('#bc-' + f.key, f.getValue(product), { format: "CODE39", width: 1.5, height: 50, displayValue: true, fontSize: 11, margin: 5 });
-                        } catch (e2) {}
-                    }
-                }, 100);
+                setTimeout(() => { generateBarcode('bc-' + f.key, val); }, 100);
             });
         }
 
@@ -1231,16 +1339,13 @@
             content.innerHTML = '';
 
             FIELDS.forEach((f, i) => {
+                const val = f.getValue(product);
                 const item = document.createElement('div');
                 item.className = 'print-item';
-                item.innerHTML = '<h5>' + f.label + '</h5><svg id="print-bc-' + i + '"></svg><div class="val">' + f.getValue(product) + '</div>';
+                item.innerHTML = '<h5>' + f.label + '</h5><svg id="print-bc-' + i + '"></svg><div class="val">' + val + '</div>';
                 content.appendChild(item);
 
-                setTimeout(() => {
-                    try { JsBarcode('#print-bc-' + i, f.getValue(product), { format: "CODE128", width: 2, height: 60, fontSize: 10, margin: 5 }); } catch (e) {
-                        try { JsBarcode('#print-bc-' + i, f.getValue(product), { format: "CODE39", width: 2, height: 60, fontSize: 10, margin: 5 }); } catch (e2) {}
-                    }
-                }, 200 + i * 100);
+                setTimeout(() => { generateBarcode('print-bc-' + i, val); }, 200 + i * 100);
             });
 
             document.getElementById('printModal').classList.add('active');
