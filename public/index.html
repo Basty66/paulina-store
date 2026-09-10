@@ -3600,6 +3600,17 @@
                 return matches.map(m => ({ raw: m, val: parsePrice(m) })).filter(n => n.val > 0);
             };
 
+            // Detect qty per package from description: "8x125 GRS", "160 Gr.(x10)", "2x500"
+            const detectPackageQty = (desc) => {
+                let m = desc.match(/(\d+)\s*[xX]\s*\d+/);
+                if (m) return parseInt(m[1]);
+                m = desc.match(/\(x(\d+)\)/i);
+                if (m) return parseInt(m[1]);
+                m = desc.match(/(\d+)\s*(?:UN|PZA|piezas?)\b/i);
+                if (m) return parseInt(m[1]);
+                return 1;
+            };
+
             for (const line of lines) {
                 if (line.length < 5) continue;
 
@@ -3629,17 +3640,22 @@
                 const numbers = extractNumbers(after);
                 if (numbers.length < 2) continue;
 
-                const price = numbers[1].val;
-                if (price <= 0 || price > 10000000) continue;
+                const grossPrice = numbers[1].val;
+                if (grossPrice <= 0 || grossPrice > 10000000) continue;
 
-                const key = code + '|' + price;
+                const packageQty = detectPackageQty(desc);
+                const unitPrice = packageQty > 1 ? Math.round(grossPrice / packageQty) : grossPrice;
+
+                const key = code + '|' + grossPrice;
                 if (seen.has(key)) continue;
                 seen.add(key);
 
                 facturaProducts.push({
                     name: desc.substring(0, 80),
-                    qty: qty,
-                    price: price,
+                    qty: qty * packageQty,
+                    price: unitPrice,
+                    grossPrice: grossPrice,
+                    packageQty: packageQty,
                     code: code,
                     selected: true
                 });
@@ -3657,7 +3673,7 @@
                             const key = code + '|' + price;
                             if (!seen.has(key)) {
                                 seen.add(key);
-                                facturaProducts.push({ name: desc.substring(0, 80), qty: 1, price: price, code: code, selected: true });
+                                facturaProducts.push({ name: desc.substring(0, 80), qty: 1, price: price, grossPrice: price, packageQty: 1, code: code, selected: true });
                             }
                         }
                     }
@@ -3685,9 +3701,10 @@
                     '<input type="checkbox" ' + (p.selected ? 'checked' : '') + ' onchange="facturaToggle(' + i + ', this.checked)" style="accent-color:var(--accent);width:18px;height:18px;cursor:pointer;">' +
                     '<div style="flex:1;min-width:0;">' +
                         '<input type="text" value="' + p.name.replace(/"/g, '&quot;') + '" onchange="facturaEditName(' + i + ', this.value)" style="width:100%;background:transparent;border:none;color:var(--text);font-size:0.8rem;font-weight:600;padding:2px 0;outline:none;border-bottom:1px dashed transparent;" onfocus="this.style.borderBottomColor=var(--accent)" onblur="this.style.borderBottomColor=\'transparent\'">' +
-                        '<div style="display:flex;gap:12px;margin-top:2px;">' +
+                        '<div style="display:flex;gap:12px;margin-top:2px;flex-wrap:wrap;">' +
                             '<span style="font-size:0.7rem;color:var(--text-muted);">Cant: <input type="number" value="' + p.qty + '" min="1" style="width:36px;background:transparent;border:none;color:var(--accent);font-size:0.7rem;font-weight:700;text-align:center;outline:none;" onchange="facturaEditQty(' + i + ', this.value)"></span>' +
-                            '<span style="font-size:0.7rem;color:var(--text-muted);">Precio: $<input type="number" value="' + p.price + '" min="0" style="width:60px;background:transparent;border:none;color:var(--accent);font-size:0.7rem;font-weight:700;text-align:center;outline:none;" onchange="facturaEditPrice(' + i + ', this.value)"></span>' +
+                            '<span style="font-size:0.7rem;color:var(--text-muted);">P.Unit: $<input type="number" value="' + p.price + '" min="0" style="width:60px;background:transparent;border:none;color:var(--accent);font-size:0.7rem;font-weight:700;text-align:center;outline:none;" onchange="facturaEditPrice(' + i + ', this.value)"></span>' +
+                            (p.packageQty > 1 ? '<span style="font-size:0.65rem;color:var(--warning);">Caja x' + p.packageQty + '</span>' : '') +
                         '</div>' +
                     '</div>' +
                     '<button onclick="facturaRemove(' + i + ')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;" title="Eliminar">' +
@@ -3717,7 +3734,6 @@
 
             let added = 0;
             for (const p of selected) {
-                // Auto-generate barcode
                 const existingCodes = products.map(x => parseInt(x.codigo)).filter(n => !isNaN(n));
                 const nextCode = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 100000;
                 const codigo = String(nextCode);
@@ -3731,8 +3747,8 @@
                             descripcion: p.name,
                             precioCompra: p.price,
                             precioVenta: Math.round(p.price * 1.3),
-                            precioMayor: 0,
-                            cantidadMayor: 1,
+                            precioMayor: p.packageQty > 1 ? Math.round(p.price * 1.15) : 0,
+                            cantidadMayor: p.packageQty > 1 ? p.packageQty : 1,
                             tipo: 'UNITARIO',
                             descuento: 0,
                             familia: 'ABARROTES',
