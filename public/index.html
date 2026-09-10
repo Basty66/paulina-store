@@ -134,6 +134,9 @@
         .btn-danger:hover { background: #dc2626; }
         .btn-outline { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
         .btn-outline:hover { background: var(--bg-elevated); color: var(--text-primary); }
+        .btn-sm { padding: 4px 10px; font-size: 0.72rem; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); }
+        .btn-sm:hover { background: var(--bg-elevated); }
+        .btn-sm.active { background: var(--accent); color: white; border-color: var(--accent); }
         .btn-icon {
             width: 36px; height: 36px; padding: 0; border-radius: var(--radius-sm);
             background: var(--bg-elevated); border: 1px solid var(--border);
@@ -1290,6 +1293,17 @@
 
                 <div id="gananciasResumen" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:16px;"></div>
 
+                <div id="gananciasRecomendaciones" style="display:none;margin-bottom:16px;"></div>
+
+                <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+                    <button class="btn btn-sm btn-primary ganancia-filter active" onclick="gananciaFilter('todos', this)">Todos</button>
+                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('mayor', this)">Mayor Ganancia</button>
+                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('menor', this)">Menor Ganancia</button>
+                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('sobre30', this)">Sobre 30%</button>
+                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('bajo30', this)">Bajo 30%</button>
+                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('subir', this)">Subir Precio</button>
+                </div>
+
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
                     <div class="card" style="padding:12px;">
                         <h3 style="font-size:0.8rem;margin-bottom:8px;color:var(--text-secondary);">Top 10 Mayor Ganancia</h3>
@@ -1307,7 +1321,10 @@
                 </div>
 
                 <div class="card">
-                    <h3 style="font-size:0.85rem;margin-bottom:12px;">Detalle de Ganancias por Producto</h3>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <h3 style="font-size:0.85rem;">Detalle de Ganancias</h3>
+                        <span id="gananciasCount" style="font-size:0.7rem;color:var(--text-muted);"></span>
+                    </div>
                     <div style="overflow-x:auto;">
                         <table id="gananciasTable" style="width:100%;font-size:0.78rem;border-collapse:collapse;">
                             <thead>
@@ -1317,7 +1334,7 @@
                                     <th style="padding:8px 6px;">Venta</th>
                                     <th style="padding:8px 6px;">Ganancia</th>
                                     <th style="padding:8px 6px;">Margen %</th>
-                                    <th style="padding:8px 6px;">Estado</th>
+                                    <th style="padding:8px 6px;">Recomendacion</th>
                                 </tr>
                             </thead>
                             <tbody id="gananciasBody"></tbody>
@@ -3120,29 +3137,58 @@
         // ===== GANANCIAS / PROFIT ANALYSIS =====
         const MARGEN_LEGAL = 30;
         let chartTop = null, chartDist = null, chartMargen = null;
+        let gananciasItems = [];
+        let gananciaCurrentFilter = 'todos';
+
+        function gananciaFilter(filter, btn) {
+            gananciaCurrentFilter = filter;
+            document.querySelectorAll('.ganancia-filter').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            renderGananciasTable();
+        }
+
+        function gananciaRecommendation(p) {
+            if (p.compra <= 0) return { text: 'Sin precio compra', color: 'var(--text-muted)', icon: '?' };
+            if (p.margen >= 50) return { text: 'Margen excelente', color: 'var(--accent)', icon: '✓' };
+            if (p.margen >= MARGEN_LEGAL) return { text: 'Sobre 30% legal', color: 'var(--accent)', icon: '✓' };
+            if (p.margen >= 20) {
+                const nuevo = Math.round(p.compra * 1.3);
+                const diff = nuevo - p.venta;
+                return { text: 'Subir $' + diff + ' (a $' + nuevo + ')', color: 'var(--warning)', icon: '↑' };
+            }
+            if (p.margen >= 10) {
+                const nuevo = Math.round(p.compra * 1.3);
+                const diff = nuevo - p.venta;
+                return { text: 'Urgente: +$' + diff + ' (a $' + nuevo + ')', color: '#f97316', icon: '↑↑' };
+            }
+            const nuevo = Math.round(p.compra * 1.3);
+            const diff = nuevo - p.venta;
+            return { text: 'Critico: +$' + diff + ' (a $' + nuevo + ')', color: 'var(--danger)', icon: '!!!' };
+        }
 
         function renderGanancias() {
             if (!products || products.length === 0) return;
 
-            const items = products.map(p => {
+            gananciasItems = products.map(p => {
                 const compra = parseFloat(p.precio_compra) || 0;
                 const venta = parseFloat(p.precio_venta) || 0;
                 const ganancia = venta - compra;
                 const margen = compra > 0 ? ((ganancia / compra) * 100) : 0;
-                return { ...p, compra, venta, ganancia, margen };
+                const rec = gananciaRecommendation({ compra, venta, ganancia, margen });
+                return { ...p, compra, venta, ganancia, margen, rec };
             }).filter(p => p.compra > 0 && p.venta > 0);
 
-            if (items.length === 0) {
+            if (gananciasItems.length === 0) {
                 document.getElementById('gananciasResumen').innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text-muted);">No hay productos con precio de compra y venta definidos</div>';
                 return;
             }
 
-            const totalGanancia = items.reduce((s, p) => s + p.ganancia, 0);
-            const promedioMargen = items.reduce((s, p) => s + p.margen, 0) / items.length;
-            const maxGanancia = items.reduce((m, p) => p.ganancia > m.ganancia ? p : m, items[0]);
-            const minGanancia = items.reduce((m, p) => p.ganancia < m.ganancia ? p : m, items[0]);
-            const sobreLegal = items.filter(p => p.margen >= MARGEN_LEGAL).length;
-            const bajoLegal = items.filter(p => p.margen < MARGEN_LEGAL && p.margen > 0).length;
+            const totalGanancia = gananciasItems.reduce((s, p) => s + p.ganancia, 0);
+            const promedioMargen = gananciasItems.reduce((s, p) => s + p.margen, 0) / gananciasItems.length;
+            const maxGanancia = gananciasItems.reduce((m, p) => p.ganancia > m.ganancia ? p : m, gananciasItems[0]);
+            const minGanancia = gananciasItems.reduce((m, p) => p.ganancia < m.ganancia ? p : m, gananciasItems[0]);
+            const sobreLegal = gananciasItems.filter(p => p.margen >= MARGEN_LEGAL).length;
+            const bajoLegal = gananciasItems.filter(p => p.margen < MARGEN_LEGAL && p.margen > 0).length;
 
             document.getElementById('gananciasResumen').innerHTML =
                 '<div class="card" style="padding:12px;text-align:center;"><div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:4px;">Ganancia Total</div><div style="font-size:1.1rem;font-weight:700;color:var(--accent);">$' + Math.round(totalGanancia).toLocaleString('es-CL') + '</div></div>' +
@@ -3152,8 +3198,36 @@
                 '<div class="card" style="padding:12px;text-align:center;"><div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:4px;">Sobre 30%</div><div style="font-size:1.1rem;font-weight:700;color:var(--accent);">' + sobreLegal + '</div></div>' +
                 '<div class="card" style="padding:12px;text-align:center;"><div style="font-size:0.65rem;color:var(--text-muted);margin-bottom:4px;">Bajo 30%</div><div style="font-size:1.1rem;font-weight:700;color:var(--danger);">' + bajoLegal + '</div></div>';
 
-            // Top 10 bar chart
-            const top10 = [...items].sort((a, b) => b.ganancia - a.ganancia).slice(0, 10);
+            // Recommendations
+            const needRaise = gananciasItems.filter(p => p.margen > 0 && p.margen < MARGEN_LEGAL);
+            const recDiv = document.getElementById('gananciasRecomendaciones');
+            if (needRaise.length > 0) {
+                const topNeed = [...needRaise].sort((a, b) => a.margen - b.margen).slice(0, 5);
+                recDiv.style.display = 'block';
+                recDiv.innerHTML =
+                    '<div class="card" style="padding:12px;border-left:3px solid var(--warning);">' +
+                        '<h3 style="font-size:0.8rem;margin-bottom:8px;color:var(--warning);">Recomendaciones de Ajuste de Precio</h3>' +
+                        '<p style="font-size:0.7rem;color:var(--text-muted);margin-bottom:8px;">Estos productos estan por debajo del 30% legal. Considera subir el precio de venta.</p>' +
+                        topNeed.map(p => {
+                            const nuevo = Math.round(p.compra * 1.3);
+                            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">' +
+                                '<div style="flex:1;min-width:0;">' +
+                                    '<div style="font-size:0.78rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + truncate(p.descripcion, 30) + '</div>' +
+                                    '<div style="font-size:0.65rem;color:var(--text-muted);">Compra: $' + Math.round(p.compra) + ' → Venta actual: $' + Math.round(p.venta) + '</div>' +
+                                '</div>' +
+                                '<div style="text-align:right;flex-shrink:0;margin-left:8px;">' +
+                                    '<div style="font-size:0.7rem;font-weight:700;color:var(--danger);">' + p.margen.toFixed(1) + '%</div>' +
+                                    '<div style="font-size:0.65rem;color:var(--warning);">→ $' + nuevo + ' (' + MARGEN_LEGAL + '%)</div>' +
+                                '</div>' +
+                            '</div>';
+                        }).join('') +
+                    '</div>';
+            } else {
+                recDiv.style.display = 'none';
+            }
+
+            // Charts
+            const top10 = [...gananciasItems].sort((a, b) => b.ganancia - a.ganancia).slice(0, 10);
             if (chartTop) chartTop.destroy();
             chartTop = new Chart(document.getElementById('chartTopGanancia'), {
                 type: 'bar',
@@ -3167,16 +3241,14 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } }, x: { ticks: { maxRotation: 45, font: { size: 9 } } } }
                 }
             });
 
-            // Distribution pie
             const rangos = { '0-10%': 0, '10-20%': 0, '20-30%': 0, '30-50%': 0, '50%+': 0 };
-            items.forEach(p => {
+            gananciasItems.forEach(p => {
                 if (p.margen < 10) rangos['0-10%']++;
                 else if (p.margen < 20) rangos['10-20%']++;
                 else if (p.margen < 30) rangos['20-30%']++;
@@ -3188,21 +3260,12 @@
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(rangos),
-                    datasets: [{
-                        data: Object.values(rangos),
-                        backgroundColor: ['#ef4444', '#f97316', '#eab308', '#10b981', '#06b6d4'],
-                        borderWidth: 0
-                    }]
+                    datasets: [{ data: Object.values(rangos), backgroundColor: ['#ef4444', '#f97316', '#eab308', '#10b981', '#06b6d4'], borderWidth: 0 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } } }
             });
 
-            // Margen bar chart (all products)
-            const sorted = [...items].sort((a, b) => b.margen - a.margen);
+            const sorted = [...gananciasItems].sort((a, b) => b.margen - a.margen);
             if (chartMargen) chartMargen.destroy();
             chartMargen = new Chart(document.getElementById('chartMargenBarras'), {
                 type: 'bar',
@@ -3216,30 +3279,39 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    indexAxis: 'y',
-                    plugins: {
-                        legend: { display: false },
-                        annotation: { annotations: { legalLine: { type: 'line', xMin: MARGEN_LEGAL, xMax: MARGEN_LEGAL, borderColor: '#f59e0b', borderWidth: 2, borderDash: [5, 5], label: { display: true, content: '30% Legal', position: 'end', font: { size: 9 } } } } }
-                    },
+                    responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                    plugins: { legend: { display: false } },
                     scales: { x: { beginAtZero: true, ticks: { callback: v => v + '%' } }, y: { ticks: { font: { size: 9 } } } }
                 }
             });
 
-            // Table
+            renderGananciasTable();
+        }
+
+        function renderGananciasTable() {
+            let filtered = [...gananciasItems];
+
+            switch (gananciaCurrentFilter) {
+                case 'mayor': filtered.sort((a, b) => b.ganancia - a.ganancia); break;
+                case 'menor': filtered.sort((a, b) => a.ganancia - b.ganancia); break;
+                case 'sobre30': filtered = filtered.filter(p => p.margen >= MARGEN_LEGAL); break;
+                case 'bajo30': filtered = filtered.filter(p => p.margen < MARGEN_LEGAL && p.margen > 0); break;
+                case 'subir': filtered = filtered.filter(p => p.margen > 0 && p.margen < MARGEN_LEGAL).sort((a, b) => a.margen - b.margen); break;
+                default: filtered.sort((a, b) => b.margen - a.margen);
+            }
+
+            document.getElementById('gananciasCount').textContent = filtered.length + ' productos';
+
             const tbody = document.getElementById('gananciasBody');
-            tbody.innerHTML = sorted.map(p => {
-                const estado = p.margen >= MARGEN_LEGAL ? '<span style="color:var(--accent);">● Legal</span>' :
-                               p.margen > 0 ? '<span style="color:var(--warning);">● Bajo</span>' :
-                               '<span style="color:var(--text-muted);">● Sin datos</span>';
+            tbody.innerHTML = filtered.map(p => {
+                const rec = p.rec;
                 return '<tr style="border-bottom:1px solid var(--border);">' +
                     '<td style="padding:8px 6px;font-weight:600;">' + truncate(p.descripcion, 28) + '</td>' +
                     '<td style="padding:8px 6px;">$' + Math.round(p.compra) + '</td>' +
                     '<td style="padding:8px 6px;">$' + Math.round(p.venta) + '</td>' +
                     '<td style="padding:8px 6px;font-weight:700;color:var(--accent);">$' + Math.round(p.ganancia) + '</td>' +
                     '<td style="padding:8px 6px;font-weight:700;color:' + (p.margen >= MARGEN_LEGAL ? 'var(--accent)' : 'var(--danger)') + ';">' + p.margen.toFixed(1) + '%</td>' +
-                    '<td style="padding:8px 6px;">' + estado + '</td>' +
+                    '<td style="padding:8px 6px;font-size:0.72rem;color:' + rec.color + ';font-weight:600;">' + rec.icon + ' ' + rec.text + '</td>' +
                 '</tr>';
             }).join('');
         }
