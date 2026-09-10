@@ -7,20 +7,22 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: #09090b; color: #fafafa; padding: 20px; }
-        h1 { text-align: center; margin-bottom: 20px; color: #10b981; }
-        .subtitle { text-align: center; color: #71717a; font-size: 0.9rem; margin-bottom: 30px; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; max-width: 500px; margin: 0 auto; }
-        .card { background: #18181b; border: 1px solid #3f3f46; border-radius: 12px; padding: 20px; }
-        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-        .card-num { font-size: 1.6rem; font-weight: 800; color: #10b981; }
-        .card-name { font-size: 1.1rem; font-weight: 600; color: #fafafa; }
-        .barcode-section { margin-bottom: 16px; }
-        .barcode-section:last-child { margin-bottom: 0; }
-        .barcode-label { font-size: 0.7rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600; }
-        .barcode-wrap { background: white; padding: 12px; border-radius: 8px; display: inline-block; }
-        .card .tipo { font-size: 0.65rem; color: #52525b; margin-top: 12px; text-align: center; }
-        @media print { body { background: white; color: black; padding: 10px; } .card { border-color: #ccc; page-break-inside: avoid; margin-bottom: 12px; } .card-name { color: #000; } .card-num { color: #10b981; } }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #09090b; color: #fafafa; padding: 16px; }
+        h1 { text-align: center; margin-bottom: 16px; color: #10b981; font-size: 1.3rem; }
+        .subtitle { text-align: center; color: #71717a; font-size: 0.85rem; margin-bottom: 24px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 16px; max-width: 500px; margin: 0 auto; }
+        .card { background: #18181b; border: 1px solid #3f3f46; border-radius: 12px; padding: 16px; }
+        .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .card-num { font-size: 1.4rem; font-weight: 800; color: #10b981; }
+        .card-name { font-size: 1rem; font-weight: 600; color: #fafafa; }
+        .barcode-section { margin-bottom: 14px; text-align: center; }
+        .barcode-section:last-of-type { margin-bottom: 0; }
+        .barcode-label { font-size: 0.65rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600; }
+        .barcode-wrap { background: white; padding: 10px; border-radius: 8px; display: inline-block; max-width: 100%; overflow: hidden; }
+        .barcode-wrap svg { max-width: 100%; height: auto; }
+        .card .tipo { font-size: 0.6rem; color: #52525b; margin-top: 10px; text-align: center; }
+        @media (min-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+        @media print { body { background: white; color: black; padding: 10px; } .card { border-color: #ccc; page-break-inside: avoid; margin-bottom: 10px; } .card-name { color: #000; } .card-num { color: #10b981; } }
     </style>
 </head>
 <body>

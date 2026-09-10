@@ -427,7 +427,6 @@
         .modal-box {
             background: var(--bg-card); border: 1px solid var(--border);
             border-radius: var(--radius); width: 100%; max-width: 600px;
-            max-height: 85vh; overflow-y: auto;
         }
         .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .modal-header h2 { font-size: 1rem; font-weight: 700; }
@@ -1178,11 +1177,6 @@
                     </div>
                     <div id="familiasList"></div>
                 </div>
-
-                <div class="card" id="familiaBarcodesCard" style="display:none;">
-                    <h3 style="font-size:0.9rem;margin-bottom:12px;">Codigos de Barras</h3>
-                    <div id="familiaBarcodes" style="overflow-x:auto;"></div>
-                </div>
             </div>
         </div>
     </div>
@@ -1326,30 +1320,53 @@
     </div>
 
     <div class="modal-overlay" id="barcodeModal">
-        <div class="modal-box" style="max-width:500px;">
+        <div class="modal-box" style="max-width:400px;">
             <div class="modal-header">
                 <h2>Codigos de Barras</h2>
                 <button class="btn-icon" onclick="document.getElementById('barcodeModal').classList.remove('active')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div class="modal-body" style="text-align:center;">
-                <div id="barcodeModalInfo" style="margin-bottom:20px;"></div>
-                <div style="margin-bottom:20px;">
-                    <div style="font-size:0.7rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;">Codigo</div>
-                    <div style="background:white;padding:12px;border-radius:8px;display:inline-block;"><svg id="barcodeModalCode"></svg></div>
+            <div class="modal-body" style="text-align:center;padding:16px;">
+                <div id="barcodeModalInfo" style="margin-bottom:14px;"></div>
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;font-weight:600;">Codigo</div>
+                    <div style="background:white;padding:10px;border-radius:8px;display:inline-block;"><svg id="barcodeModalCode"></svg></div>
                 </div>
                 <div>
-                    <div style="font-size:0.7rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;">Descripcion</div>
-                    <div style="background:white;padding:12px;border-radius:8px;display:inline-block;"><svg id="barcodeModalName"></svg></div>
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;font-weight:600;">Descripcion</div>
+                    <div style="background:white;padding:10px;border-radius:8px;display:inline-block;"><svg id="barcodeModalName"></svg></div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" onclick="window.print()">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                    Imprimir
-                </button>
+                <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
                 <button class="btn btn-outline" onclick="document.getElementById('barcodeModal').classList.remove('active')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="familiaBarcodeModal">
+        <div class="modal-box" style="max-width:400px;">
+            <div class="modal-header">
+                <h2>Codigo de Familia</h2>
+                <button class="btn-icon" onclick="document.getElementById('familiaBarcodeModal').classList.remove('active')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="text-align:center;padding:16px;">
+                <div id="familiaBarcodeInfo" style="margin-bottom:14px;"></div>
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;font-weight:600;">Codigo</div>
+                    <div style="background:white;padding:10px;border-radius:8px;display:inline-block;"><svg id="famModalCode"></svg></div>
+                </div>
+                <div>
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;font-weight:600;">Nombre</div>
+                    <div style="background:white;padding:10px;border-radius:8px;display:inline-block;"><svg id="famModalName"></svg></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+                <button class="btn btn-outline" onclick="document.getElementById('familiaBarcodeModal').classList.remove('active')">Cerrar</button>
             </div>
         </div>
     </div>
@@ -2767,37 +2784,44 @@
         }
 
         function showFamiliaBarcode(codigo, nombre) {
-            const card = document.getElementById('familiaBarcodesCard');
-            const container = document.getElementById('familiaBarcodes');
-            card.style.display = 'block';
+            const modal = document.getElementById('familiaBarcodeModal');
+            const info = document.getElementById('familiaBarcodeInfo');
+            info.innerHTML = '<div style="font-size:0.95rem;font-weight:600;margin-bottom:2px;">' + nombre + '</div><div style="color:var(--text-secondary);font-size:0.8rem;">' + codigo + '</div>';
+            modal.classList.add('active');
             const sanitizedName = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-            container.innerHTML =
-                '<div style="text-align:center;margin-bottom:16px;"><strong style="color:var(--primary);font-size:1.1rem;">' + codigo + '</strong> — ' + nombre + '</div>' +
-                '<div style="display:flex;flex-direction:column;gap:24px;align-items:center;padding:8px 0;">' +
-                    '<div style="text-align:center;width:100%;"><div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;font-weight:600;">Codigo</div><div style="background:white;padding:12px;border-radius:8px;display:inline-block;"><svg id="fam-bc-code"></svg></div></div>' +
-                    '<div style="text-align:center;width:100%;"><div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:8px;text-transform:uppercase;font-weight:600;">Nombre</div><div style="background:white;padding:12px;border-radius:8px;display:inline-block;"><svg id="fam-bc-name"></svg></div></div>' +
-                '</div>' +
-                '<div style="text-align:center;margin-top:16px;"><button class="btn btn-outline" onclick="window.print()">Imprimir</button></div>';
             setTimeout(() => {
                 try {
-                    JsBarcode('#fam-bc-code', codigo, { format: 'CODE128', width: 2, height: 70, displayValue: true, fontSize: 16, margin: 8 });
-                    JsBarcode('#fam-bc-name', sanitizedName, { format: 'CODE128', width: 1.5, height: 70, displayValue: true, fontSize: 12, margin: 8, textMargin: 4 });
-                } catch(e) { container.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error generando codigo de barras: ' + e.message + '</p>'; }
+                    JsBarcode('#famModalCode', codigo, { format: 'CODE128', width: 2, height: 60, displayValue: true, fontSize: 14, margin: 6 });
+                    JsBarcode('#famModalName', sanitizedName, { format: 'CODE128', width: 1.5, height: 60, displayValue: true, fontSize: 11, margin: 6, textMargin: 3 });
+                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:6px;">Error generando codigo</p>'; }
             }, 100);
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function showProductBarcode(codigo, descripcion) {
             const modal = document.getElementById('barcodeModal');
             const info = document.getElementById('barcodeModalInfo');
-            info.innerHTML = '<div style="font-size:1rem;font-weight:600;margin-bottom:4px;">' + descripcion + '</div><div style="color:var(--text-secondary);font-size:0.85rem;">' + codigo + '</div>';
+            info.innerHTML = '<div style="font-size:0.95rem;font-weight:600;margin-bottom:2px;">' + descripcion + '</div><div style="color:var(--text-secondary);font-size:0.8rem;">' + codigo + '</div>';
             modal.classList.add('active');
             const sanitizedName = descripcion.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
             setTimeout(() => {
                 try {
-                    JsBarcode('#barcodeModalCode', codigo, { format: 'CODE128', width: 2, height: 70, displayValue: true, fontSize: 16, margin: 8 });
-                    JsBarcode('#barcodeModalName', sanitizedName, { format: 'CODE128', width: 1.5, height: 70, displayValue: true, fontSize: 12, margin: 8, textMargin: 4 });
-                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error generando codigo</p>'; }
+                    JsBarcode('#barcodeModalCode', codigo, { format: 'CODE128', width: 2, height: 60, displayValue: true, fontSize: 14, margin: 6 });
+                    JsBarcode('#barcodeModalName', sanitizedName, { format: 'CODE128', width: 1.5, height: 60, displayValue: true, fontSize: 11, margin: 6, textMargin: 3 });
+                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:6px;">Error generando codigo</p>'; }
+            }, 100);
+        }
+
+        function showFamiliaBarcode(codigo, nombre) {
+            const modal = document.getElementById('familiaBarcodeModal');
+            const info = document.getElementById('familiaBarcodeInfo');
+            info.innerHTML = '<div style="font-size:0.95rem;font-weight:600;margin-bottom:2px;">' + nombre + '</div><div style="color:var(--text-secondary);font-size:0.8rem;">' + codigo + '</div>';
+            modal.classList.add('active');
+            const sanitizedName = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            setTimeout(() => {
+                try {
+                    JsBarcode('#famModalCode', codigo, { format: 'CODE128', width: 2, height: 60, displayValue: true, fontSize: 14, margin: 6 });
+                    JsBarcode('#famModalName', sanitizedName, { format: 'CODE128', width: 1.5, height: 60, displayValue: true, fontSize: 11, margin: 6, textMargin: 3 });
+                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:6px;">Error generando codigo</p>'; }
             }, 100);
         }
 
