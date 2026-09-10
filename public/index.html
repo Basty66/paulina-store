@@ -2907,26 +2907,36 @@
             }
 
             const data = products.map(p => ({
-                'ID': p.id,
                 'Codigo': p.codigo,
                 'Descripcion': p.descripcion,
                 'Familia': p.familia || '',
-                'Familia Codigo': p.familia_codigo || '',
+                'Tipo': p.tipo || 'UNITARIO',
                 'Precio Venta': p.precio_venta,
                 'Precio Compra': p.precio_compra || 0,
+                'Precio Mayor': p.precio_mayor || 0,
+                'Cant. Mayor': p.cantidad_mayor || 1,
+                'Descuento %': p.descuento || 0,
+                'Proveedor': p.proveedor || '',
+                'Stock': p.stock || 0,
+                'Stock Critico': p.stock_critico || 0,
                 'Estado': p.precio_compra > 0 ? 'Listo' : 'Pendiente'
             }));
 
             const ws = XLSX.utils.json_to_sheet(data);
 
             ws['!cols'] = [
-                { wch: 5 },   // ID
                 { wch: 12 },  // Codigo
                 { wch: 35 },  // Descripcion
                 { wch: 15 },  // Familia
-                { wch: 10 },  // Familia Codigo
+                { wch: 10 },  // Tipo
                 { wch: 12 },  // Precio Venta
                 { wch: 12 },  // Precio Compra
+                { wch: 12 },  // Precio Mayor
+                { wch: 10 },  // Cant. Mayor
+                { wch: 10 },  // Descuento
+                { wch: 15 },  // Proveedor
+                { wch: 8 },   // Stock
+                { wch: 10 },  // Stock Critico
                 { wch: 10 }   // Estado
             ];
 
