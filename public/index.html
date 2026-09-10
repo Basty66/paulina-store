@@ -1092,6 +1092,11 @@
                         <div class="stat-value" id="statCodes">0</div>
                         <div class="stat-label">Codigos</div>
                     </div>
+                    <div class="stat" onclick="showPendingProducts()" style="cursor:pointer;" title="Ver pendientes">
+                        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+                        <div class="stat-value" id="statPending">0</div>
+                        <div class="stat-label">Pendientes</div>
+                    </div>
                     <div class="stat">
                         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
                         <div class="stat-value" id="statValue">$0</div>
@@ -1407,6 +1412,21 @@
 
     <div id="toast" class="toast"></div>
 
+    <div class="modal-overlay" id="pendingModal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2>Productos Pendientes</h2>
+                <button class="btn-icon" onclick="document.getElementById('pendingModal').classList.remove('active')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="pendingModalBody" style="max-height:60vh;overflow-y:auto;"></div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="document.getElementById('pendingModal').classList.remove('active')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = '/api/productos';
         let products = [];
@@ -1421,6 +1441,21 @@
             t.className = 'toast show ' + type;
             clearTimeout(t._timer);
             t._timer = setTimeout(() => { t.className = 'toast'; }, 2500);
+        }
+
+        function showPendingProducts() {
+            const body = document.getElementById('pendingModalBody');
+            const pending = products.filter(p => !isProductReady(p.id));
+            if (pending.length === 0) {
+                body.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No hay productos pendientes</p></div>';
+            } else {
+                body.innerHTML = '<div style="margin-bottom:10px;font-size:0.85rem;color:var(--text-secondary);">' + pending.length + ' productos sin marcar como listos</div>' +
+                    pending.map(p => '<div style="display:flex;align-items:center;gap:10px;padding:10px;border-bottom:1px solid var(--border);">' +
+                        '<div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;color:var(--danger);font-weight:700;font-size:0.7rem;">' + p.codigo + '</div>' +
+                        '<div style="flex:1;"><div style="font-weight:600;font-size:0.85rem;">' + p.descripcion + '</div><div style="font-size:0.75rem;color:var(--text-muted);">$' + parseInt(p.precio_venta) + '</div></div>' +
+                    '</div>').join('');
+            }
+            document.getElementById('pendingModal').classList.add('active');
         }
 
         let scanSession = { productId: null, scannedFields: {}, allAlerted: false };
@@ -1473,9 +1508,11 @@
             const e1 = document.getElementById('statTotal');
             const e2 = document.getElementById('statCodes');
             const e3 = document.getElementById('statValue');
+            const e4 = document.getElementById('statPending');
             if (e1) e1.textContent = products.length;
             if (e2) e2.textContent = products.length * 12;
             if (e3) { const t = products.reduce((s, p) => s + parseFloat(p.precio_venta || 0), 0); e3.textContent = '$' + parseInt(t); }
+            if (e4) { const pending = products.filter(p => !isProductReady(p.id)).length; e4.textContent = pending; }
         }
 
         // ===== FORM =====
