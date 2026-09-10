@@ -1020,10 +1020,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
                 Registro
             </button>
-            <button class="nav-btn" onclick="showTab('escaner', this)">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
-                Escanear
-            </button>
             <button class="nav-btn" onclick="showTab('productos', this)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
                 Productos
@@ -1100,101 +1096,6 @@
             </div>
 
             <!-- Escaner -->
-            <div id="tab-escaner" class="panel">
-                <h2 class="section-title">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
-                    Escanear Codigo
-                </h2>
-
-                <div class="card">
-                    <div class="field">
-                        <label>Seleccionar Producto</label>
-                        <select id="selectProductScan" onchange="startScanSession()">
-                            <option value="">-- Elegir producto --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="scanSessionPanel" style="display: none;">
-                    <div class="card">
-                        <div class="progress-header">
-                            <span class="progress-label" id="currentProduct"></span>
-                            <span class="progress-count" id="progressCount">0/12</span>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                        </div>
-                        <div class="fields-grid" id="fieldsGrid"></div>
-                        <div class="btn-group">
-                            <button class="btn btn-outline" onclick="showSummary()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                Resumen
-                            </button>
-                            <button class="btn btn-outline" onclick="resetScanSession()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                                Reiniciar
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="scanner-box" style="position:relative;overflow:hidden;">
-                        <div class="scanner-box-header">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
-                            <h3>Apunte al codigo de barras</h3>
-                        </div>
-                        <div id="reader" style="width: 100%; min-height: 200px; background: #000;"></div>
-                        <div id="cameraOverlay" style="display:none;position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,0.9));padding:20px 16px 16px;z-index:10;">
-                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                                <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.5s infinite;"></div>
-                                <span style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Escaneando</span>
-                            </div>
-                            <div style="font-size:0.9rem;font-weight:700;color:var(--text-primary);margin-bottom:4px;" id="cameraProductName"></div>
-                            <div style="font-size:0.75rem;color:var(--text-muted);" id="cameraProgressLabel">0/12 campos</div>
-                        </div>
-                        <div id="cameraScanFlash" style="display:none;position:absolute;inset:0;background:var(--accent);opacity:0;z-index:15;pointer-events:none;transition:opacity 0.15s;"></div>
-                        <div class="switch-cam-btn" id="switchCamBtn" onclick="switchCamera('main')" title="Cambiar camara">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/><polyline points="14 8 18 4 22 8"/><path d="M14 12l4-4 4 4"/><line x1="4" y1="4" x2="4" y2="20"/></svg>
-                        </div>
-                        <div class="scanner-box-footer">
-                            <button class="btn btn-primary" id="btn-start" onclick="startCamera()">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                Iniciar Camara
-                            </button>
-                            <button class="btn btn-danger" id="btn-stop" onclick="stopCamera()" style="display:none;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                                Detener
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="upload-zone" onclick="document.getElementById('barcode-file').click()">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                        <p>O suba imagen del codigo</p>
-                        <input type="file" id="barcode-file" accept="image/*" onchange="handleBarcodeImage(event)">
-                    </div>
-
-                    <div id="scanResult" class="scan-result-card" style="display: none;">
-                        <div class="scan-result-header">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            <h3>Codigo Detectado</h3>
-                        </div>
-                        <div class="scan-result-row">
-                            <span class="scan-result-label">Campo</span>
-                            <span class="scan-result-value" id="scanned-field-name">-</span>
-                        </div>
-                        <div class="scan-result-row">
-                            <span class="scan-result-label">Valor</span>
-                            <span class="scan-result-value" id="scanned-value">-</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="noProductSelected" class="empty-state">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    <p>Seleccione un producto para comenzar</p>
-                </div>
-            </div>
-
             <!-- Productos -->
             <div id="tab-productos" class="panel">
                 <h2 class="section-title">
