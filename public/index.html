@@ -433,29 +433,42 @@
         .toast.success { border-color: #10b981; color: #10b981; }
         .toast.error { border-color: #ef4444; color: #ef4444; }
 
-        /* Pending list */
-        .pending-item {
-            display: flex; align-items: center; gap: 12px;
-            padding: 10px 14px; border-bottom: 1px solid var(--border);
-            transition: background 0.15s;
+        /* Pending/Ready modal list */
+        .pm-section-header {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.06em; padding: 10px 14px; margin: 0 -16px;
+            border-bottom: 1px solid var(--border);
         }
-        .pending-item:last-child { border-bottom: none; }
-        .pending-item:hover { background: var(--bg-elevated); }
-        .pending-item-code {
-            width: 40px; height: 40px; border-radius: var(--radius-sm);
-            background: var(--danger-bg); color: var(--danger);
+        .pm-ready-header { color: #10b981; background: rgba(16,185,129,0.06); }
+        .pm-pending-header { color: #ef4444; background: rgba(239,68,68,0.06); margin-top: 8px; }
+        .pm-badge {
+            margin-left: auto; font-size: 0.65rem; padding: 2px 8px;
+            border-radius: 999px; font-weight: 700;
+        }
+        .pm-badge-green { background: rgba(16,185,129,0.15); color: #10b981; }
+        .pm-badge-red { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .pm-empty {
+            text-align: center; padding: 16px; font-size: 0.8rem; color: var(--text-muted);
+        }
+        .pm-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 14px; border-bottom: 1px solid var(--border);
+        }
+        .pm-item:last-child { border-bottom: none; }
+        .pm-item-code {
+            width: 36px; height: 36px; border-radius: var(--radius-sm);
             display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.65rem; flex-shrink: 0;
-            border: 1px solid var(--danger);
+            font-weight: 700; font-size: 0.6rem; flex-shrink: 0;
         }
-        .pending-item-info { flex: 1; min-width: 0; }
-        .pending-item-name {
-            font-size: 0.85rem; font-weight: 600; color: var(--text-primary);
+        .pm-code-green { background: rgba(16,185,129,0.1); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+        .pm-code-red { background: rgba(239,68,68,0.1); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+        .pm-item-info { flex: 1; min-width: 0; }
+        .pm-item-name {
+            font-size: 0.8rem; font-weight: 600; color: var(--text-primary);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .pending-item-price {
-            font-size: 0.75rem; color: var(--text-muted); margin-top: 1px;
-        }
+        .pm-item-price { font-size: 0.7rem; color: var(--text-muted); }
 
         /* Modal */
         .modal-overlay {
@@ -1437,26 +1450,23 @@
     <div id="toast" class="toast"></div>
 
     <div class="modal-overlay" id="pendingModal" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal-box" style="max-width:480px;">
+        <div class="modal-box" style="max-width:500px;">
             <div class="modal-header" style="border-bottom:none;padding-bottom:0;">
                 <div>
-                    <h2 style="margin-bottom:2px;">Pendientes</h2>
+                    <h2 style="margin-bottom:2px;">Productos</h2>
                     <span id="pendingCount" style="font-size:0.75rem;color:var(--text-muted);"></span>
                 </div>
                 <button class="btn-icon" onclick="document.getElementById('pendingModal').classList.remove('active')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div class="modal-body" id="pendingModalBody" style="padding:0 16px 16px;max-height:55vh;overflow-y:auto;"></div>
-            <div class="modal-footer" style="border-top:none;">
-                <button class="btn btn-primary" onclick="syncReadyToServer()" style="flex:1;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            <div class="modal-body" id="pendingModalBody" style="padding:0 16px 16px;max-height:65vh;overflow-y:auto;"></div>
+            <div class="modal-footer" style="border-top:none;flex-wrap:wrap;gap:6px;">
+                <button class="btn btn-primary" onclick="syncReadyToServer()" style="flex:1;min-width:120px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                     Sincronizar
                 </button>
-                <button class="btn btn-outline" onclick="exportPending()" style="flex:1;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Exportar
-                </button>
+                <button class="btn btn-outline" onclick="exportPending()" style="flex:1;min-width:120px;">Exportar</button>
                 <button class="btn btn-outline" onclick="document.getElementById('pendingModal').classList.remove('active')">Cerrar</button>
             </div>
         </div>
@@ -1481,31 +1491,52 @@
         function showPendingProducts() {
             const body = document.getElementById('pendingModalBody');
             const countEl = document.getElementById('pendingCount');
+            const ready = products.filter(p => isProductReady(p.id)).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
             const pending = products.filter(p => !isProductReady(p.id)).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
 
-            countEl.textContent = pending.length + ' de ' + products.length + ' productos';
+            countEl.textContent = ready.length + ' listos / ' + pending.length + ' pendientes';
 
-            if (pending.length === 0) {
-                body.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--text-muted);">' +
-                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;margin:0 auto 12px;display:block;opacity:0.4;"><circle cx="12" cy="12" r="10"/><polyline points="16 8 12 12 8 8"/></svg>' +
-                    '<p style="font-size:0.85rem;">Todos los productos estan listos</p></div>';
+            let html = '';
+
+            // READY SECTION
+            html += '<div class="pm-section-header pm-ready-header">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;color:#10b981;"><polyline points="20 6 9 17 4 12"/></svg>' +
+                '<span>LISTOS</span><span class="pm-badge pm-badge-green">' + ready.length + '</span></div>';
+
+            if (ready.length === 0) {
+                html += '<div class="pm-empty">Sin productos listos</div>';
             } else {
-                let html = '';
-                pending.forEach((p, i) => {
-                    const showHeader = i === 0 || pending[i].descripcion[0].toUpperCase() !== pending[i-1].descripcion[0].toUpperCase();
-                    if (showHeader) {
-                        html += '<div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;padding:8px 14px 4px;background:var(--bg-elevated);margin:0 -16px;border-bottom:1px solid var(--border);">' + pending[i].descripcion[0].toUpperCase() + '</div>';
-                    }
-                    html += '<div class="pending-item">' +
-                        '<div class="pending-item-code">' + p.codigo + '</div>' +
-                        '<div class="pending-item-info">' +
-                            '<div class="pending-item-name">' + p.descripcion + '</div>' +
-                            '<div class="pending-item-price">$' + parseInt(p.precio_venta) + '</div>' +
+                ready.forEach(p => {
+                    html += '<div class="pm-item">' +
+                        '<div class="pm-item-code pm-code-green">' + p.codigo + '</div>' +
+                        '<div class="pm-item-info">' +
+                            '<div class="pm-item-name">' + p.descripcion + '</div>' +
+                            '<div class="pm-item-price">$' + parseInt(p.precio_venta) + '</div>' +
                         '</div>' +
                     '</div>';
                 });
-                body.innerHTML = html;
             }
+
+            // PENDING SECTION
+            html += '<div class="pm-section-header pm-pending-header">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#ef4444;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+                '<span>PENDIENTES</span><span class="pm-badge pm-badge-red">' + pending.length + '</span></div>';
+
+            if (pending.length === 0) {
+                html += '<div class="pm-empty">Todos listos</div>';
+            } else {
+                pending.forEach(p => {
+                    html += '<div class="pm-item">' +
+                        '<div class="pm-item-code pm-code-red">' + p.codigo + '</div>' +
+                        '<div class="pm-item-info">' +
+                            '<div class="pm-item-name">' + p.descripcion + '</div>' +
+                            '<div class="pm-item-price">$' + parseInt(p.precio_venta) + '</div>' +
+                        '</div>' +
+                    '</div>';
+                });
+            }
+
+            body.innerHTML = html;
             document.getElementById('pendingModal').classList.add('active');
         }
 
