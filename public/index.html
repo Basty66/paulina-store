@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         :root {
@@ -1370,7 +1371,7 @@
                         </button>
                     </div>
 
-                    <input type="file" id="facturaFileInput" accept="image/*" style="display:none;" onchange="facturaHandleFile(event)">
+                    <input type="file" id="facturaFileInput" accept="image/*,.pdf" style="display:none;" onchange="facturaHandleFile(event)">
                     <textarea id="facturaTextInput" style="display:none;width:100%;min-height:120px;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);font-size:0.8rem;font-family:monospace;resize:vertical;margin-bottom:12px;" placeholder="Pega aqui el texto de la factura..."></textarea>
                     <button id="facturaParseBtn" class="btn btn-primary" style="display:none;margin-bottom:12px;" onclick="facturaParseText()">Extraer Productos</button>
 
@@ -3342,14 +3343,93 @@
             const file = event.target.files[0];
             if (!file) return;
             event.target.value = '';
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                facturaImage = e.target.result;
+
+            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+                await facturaParsePDF(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    facturaImage = e.target.result;
+                    document.getElementById('facturaImg').src = facturaImage;
+                    document.getElementById('facturaPreview').style.display = 'block';
+                    await facturaOCR();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function facturaParsePDF(file) {
+            if (facturaProcessing) return;
+            facturaProcessing = true;
+            document.getElementById('facturaProgress').style.display = 'block';
+            document.getElementById('facturaStatus').textContent = 'Leyendo PDF...';
+            document.getElementById('facturaProgressBar').style.width = '10%';
+            document.getElementById('btnFacturaCam').disabled = true;
+            document.getElementById('facturaPreview').style.display = 'none';
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    document.getElementById('facturaStatus').textContent = 'Leyendo pagina ' + i + '/' + pdf.numPages + '...';
+                    document.getElementById('facturaProgressBar').style.width = Math.round((i / pdf.numPages) * 100) + '%';
+
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    const pageText = content.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+
+                document.getElementById('facturaProgressBar').style.width = '100%';
+                document.getElementById('facturaStatus').textContent = 'PDF leido correctamente (' + pdf.numPages + ' paginas)';
+
+                if (fullText.trim().length > 0) {
+                    document.getElementById('facturaRawText').style.display = 'block';
+                    document.getElementById('facturaRawContent').textContent = fullText;
+                    await facturaParse(fullText);
+                } else {
+                    showToast('El PDF no tiene texto seleccionable. Es una imagen escaneada.', 'info');
+                    document.getElementById('facturaStatus').textContent = 'PDF sin texto - intenta con OCR...';
+                    await facturaOCRFromPDF(file);
+                }
+            } catch (err) {
+                console.error('PDF error:', err);
+                document.getElementById('facturaStatus').textContent = 'Error al leer PDF';
+                showToast('Error al procesar el PDF', 'error');
+            } finally {
+                facturaProcessing = false;
+                document.getElementById('btnFacturaCam').disabled = false;
+                setTimeout(() => { document.getElementById('facturaProgress').style.display = 'none'; }, 1500);
+            }
+        }
+
+        async function facturaOCRFromPDF(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const page = await pdf.getPage(1);
+                const viewport = page.getViewport({ scale: 2.0 });
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                const ctx = canvas.getContext('2d');
+                await page.render({ canvasContext: ctx, viewport }).promise;
+
+                facturaImage = canvas.toDataURL('image/png');
                 document.getElementById('facturaImg').src = facturaImage;
                 document.getElementById('facturaPreview').style.display = 'block';
                 await facturaOCR();
-            };
-            reader.readAsDataURL(file);
+            } catch (err) {
+                console.error('PDF OCR error:', err);
+                showToast('Error al convertir PDF a imagen', 'error');
+                facturaProcessing = false;
+                document.getElementById('btnFacturaCam').disabled = false;
+                document.getElementById('facturaProgress').style.display = 'none';
+            }
         }
 
         async function facturaOCR() {
