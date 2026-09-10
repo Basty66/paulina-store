@@ -39,30 +39,30 @@ async function initDatabase() {
             )
         `);
         // Limpiar familias con codigos viejos (5 digitos) y re-insertar con 4 digitos
-        await pool.query("DELETE FROM familias WHERE codigo LIKE '9%'");
+        await pool.query("DELETE FROM familias WHERE codigo LIKE '9%' OR codigo LIKE '1%'");
         const count = await pool.query('SELECT COUNT(*) FROM familias');
         if (parseInt(count.rows[0].count) === 0) {
             const defaults = [
-                ['1001', 'Alimentos Basicos'],
-                ['1002', 'Lacteos y Huevo'],
-                ['1003', 'Carnes y Aves'],
-                ['1004', 'Embutidos y Fiambres'],
-                ['1005', 'Pescados y Mariscos'],
-                ['1006', 'Frutas y Verduras'],
-                ['1007', 'Pan y Reposteria'],
-                ['1008', 'Bebidas sin Alcohol'],
-                ['1009', 'Bebidas Alcoholicas'],
-                ['1010', 'Cafe y Te'],
-                ['1011', 'Snacks y Dulces'],
-                ['1012', 'Congelados'],
-                ['1013', 'Conservas'],
-                ['1014', 'Limpieza'],
-                ['1015', 'Higiene Personal'],
-                ['1016', 'Farmacia'],
-                ['1017', 'Bebes'],
-                ['1018', 'Mascotas'],
-                ['1019', 'Tabaco'],
-                ['1020', 'Papeleria y Utensilios']
+                ['5000', 'Alimentos Basicos'],
+                ['5001', 'Lacteos y Huevo'],
+                ['5002', 'Carnes y Aves'],
+                ['5003', 'Embutidos y Fiambres'],
+                ['5004', 'Pescados y Mariscos'],
+                ['5005', 'Frutas y Verduras'],
+                ['5006', 'Pan y Reposteria'],
+                ['5007', 'Bebidas sin Alcohol'],
+                ['5008', 'Bebidas Alcoholicas'],
+                ['5009', 'Cafe y Te'],
+                ['5010', 'Snacks y Dulces'],
+                ['5011', 'Congelados'],
+                ['5012', 'Conservas'],
+                ['5013', 'Limpieza'],
+                ['5014', 'Higiene Personal'],
+                ['5015', 'Farmacia'],
+                ['5016', 'Bebes'],
+                ['5017', 'Mascotas'],
+                ['5018', 'Tabaco'],
+                ['5019', 'Papeleria y Utensilios']
             ];
             for (const [codigo, nombre] of defaults) {
                 await pool.query('INSERT INTO familias (codigo, nombre, tipo) VALUES ($1, $2, $3) ON CONFLICT (codigo) DO NOTHING', [codigo, nombre, 'NO USA TECLA']);
