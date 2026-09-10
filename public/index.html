@@ -3571,104 +3571,87 @@
 
         function facturaParse(text) {
             facturaProducts = [];
+            const seen = new Set();
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            const skipWords = /^(TOTAL|SUBTOTAL|IVA|NETO|BOLETA|FACTURA|FACT|BOL|RUT|DIRECCION|DIREC|TELEFONO|TEL|FECHA|HORA|CAJA|CAJERO|VENDEDOR|SIRVASE|GRACIAS|VUELTO|EFECTIVO|TARJETA|DEBITO|CREDITO|VISA|MASTERCARD|AMEX|CRUDO|CONTADO|PAGO|CAMBIO|CODIGO|DESCRIPCION|PRECIO|CANT|UNIDAD|ITEM|NRO|NUM|ORIGEN|DOMICILIO|GIRO|RAZON|SOCIAL|FOLIO|TIMBRE|SII|AFIP|ORIGINAL|COPIA|NOTA|CREDITO|DEBITO| nc |nd |cierre|apertura|turno|operador|sucursal|local|estado|periodo|metodo|numero|recibo|empresa|correo|asunto|contacto|soporte|proveedor|powered|servicio|descuento|subtotal|import|cobro|moneda|cambio|envio|factura|email|phone|address|zip|city|country|tax|vat|invoice|receipt|payment|card|total|amount|balance|due|date|number|ref|order|bill|ship|item|product|description|quantity|unit|price|cost|rate|fee|charge|discount|credit|debit|note|memo|comment|detail|summary|line|row|col|status|type|code|name|number|id|account|customer|client|vendor|supplier|merchant|store|shop|market|supermercado|almacen|minimarket|abarrotes|lacteos|carnes|verduras|frutas|bebidas|limpieza|higiene|snacks|congelados|panaderia|reposteria|embutidos|fiambres|pescados|mariscos|cafe|te|tabaco|papeleria|mascotas|bebes|farmacia|perfumeria|electronica|hogar|deportes|jugueteria|ferreteria|textil|calzado|accesorios|belleza|salud|alimentos|basicos|huevos|queso|leche|mantequilla|yogurt|arroz|fideo|azucar|sal|aceite|harina|conserva|salsa|mayonesa|ketchup|mostaza|vinagre|especias|condimento|cereal|galleta|chocolate|golosina|chicle|caramelo|gomita|papita|nachos|mani|nuez|almendra|castana|avellana|semilla|pasas|damasco|durazno|cereza|manzana|pera|uva|platano|naranja|limon|mandarina|pomelo|sandia|melon|piña|mango|kiwi|frambuesa|fresa|arandano|mora|cereza|durazno|melon|sandia|pina|mango|kiwi|frambuesa|fresa|arandano|mora|tomate|cebolla|papa|zanahoria|lechuga|repollo|espinaca|apio|pepino|pimiento|champinon|brocoli|coliflor|zapallo|berenjena|calabaza|maiz|poroto|arveja|lenteja|garbanzo|soya|tofu|carne|pollo|cerdo|pavo|conejo|cordero|vacuno|res|ternera|chorizo|salchicha|jamón|queso|manjar|mermelada|miel|azucar| Panela|stevia|edulcorante|café|te|mate|chocolate|cocoa|vainilla|canela|jengibre|curcuma|pimienta|oregano|perejil|cilantro|albahaca|romero|tomillo|laurel|pimentón|comino|mostaza|wasabi|ketchup|mayonesa|salsa|aderezo|vinagreta|limon|naranja|manzana|uva|ananá|maracuyá|fruta|jugo|néctar|agua|gaseosa|cerveza|vino|ron|whisky|vodka|tequila|pisco|licor|champagne|sidra|cerveza|bebida|energizante|isotonic|electrolitico|vitaminica|suplemento|proteina|creatina|aminoacido|omega|vitamina|mineral|hierro|calcio|zinc|magnesio|potasio|sodio|fosforo|selenio|cromo|yodo|flúor|boro|silicio|vanadio|níquel|litio|estaño|tungsteno|molibdeno|cobalto|cobre|plata|oro|platino|paladio|rodio|rutenio|iridio|osmio|rhenio|escandio|ittrio|lantano|cerio|praseodimio|neodimio|prometio|samario|europio|gadolinio|terbio|disprosio|holmio|erbio|tulio|lutecio|actinio|torio|protactinio|uranio|neptunio|plutonio|americio|curio|berkilio|californio|einsteinio|fermio|mendelevio|nobelio|lawrencio|rutherfordio|dubnio|seaborgio|bohrio|hassio|meitnerio|darmstadtio|roentgenio|copernicio|nihonio|flerovio|moscovio|livemorio|tennessino|oganesson)/i;
-            const isNoise = /^\d{6,}$/;
-            const hasPrice = /\$[\s]*[\d\.\,]+/;
+            const pureMeta = /^(total|subtotal|grand total|monto pagado|importe pagado|amount paid|balance due|due date|payment|method|card|visa|mastercard|amex|status|account|customer|client|vendor|supplier| store| shop| address|phone|email|fax|zip|city|country|tax|vat| bill to| ship to|sold by|shipped by)$/i;
+
+            const findPrices = (str) => {
+                const results = [];
+                let m;
+                const r1 = /(?:\$\s*)([\d\.\,]+)/g;
+                while ((m = r1.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,\'\').replace(\',\',\'.\')); if (v > 0 && v < 10000000) results.push(v); }
+                const r2 = /([\d\.\,]+)\s*(?:US\\$|USD)/gi;
+                while ((m = r2.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,\'\').replace(\',\',\'.\')); if (v > 0 && v < 10000000) results.push(v); }
+                const r3 = /USD\s*([\d\.\,]+)/gi;
+                while ((m = r3.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,\'\').replace(\',\',\'.\')); if (v > 0 && v < 10000000) results.push(v); }
+                return results;
+            };
+
+            const findQty = (str) => {
+                let q = str.match(/\((?:Cant|Cant\.|Qty|Cantidad)\.?\s*(\d+)\)/i);
+                if (q) return parseInt(q[1]);
+                q = str.match(/\bx(\d+)\b/i);
+                if (q) return parseInt(q[1]);
+                q = str.match(/\bCant(?:idad)?[:\s]*(\d+)/i);
+                if (q) return parseInt(q[1]);
+                return 1;
+            };
+
+            const cleanName = (str) => {
+                let n = str;
+                n = n.replace(/\$\s*[\d\.\,]+/g, '');
+                n = n.replace(/[\d\.\,]+\s*(?:USD|US\\$|CLP)/gi, '');
+                n = n.replace(/USD\s*[\d\.\,]+/gi, '');
+                n = n.replace(/\b\d{8,13}\b/g, '');
+                n = n.replace(/\((?:Cant|Cant\.|Qty|Cantidad)\.?\s*\d+\)/gi, '');
+                n = n.replace(/\bx\d+\b/gi, '');
+                n = n.replace(/\bCant(?:idad)?[:\s]*\d+/gi, '');
+                n = n.replace(/^\s*#?\d+[\.\-\|\s]+/, '');
+                n = n.replace(/^[\s\-\|\/\*\.]+/, '');
+                n = n.replace(/[\s\-\|\/\*\.]+$/, '');
+                n = n.replace(/^(?:\\u00cdtem|Item)\s*\/\s*(?:Servicio|Service)\s*[:\-]?\s*/i, '');
+                n = n.replace(/^(?:Servicio|Service)\s*[:\-]?\s*/i, '');
+                n = n.replace(/\s+/g, ' ').trim();
+                return n;
+            };
 
             for (const line of lines) {
                 if (line.length < 3) continue;
-                if (isNoise.test(line.replace(/\s/g, ''))) continue;
-
-                // Extract prices - support $, USD, and plain numbers with currency
-                const prices = [];
-                const priceRegex = /(?:\$\s*|USD\s*|US\$\s*)([\d\.\,]+)/gi;
-                let pm;
-                while ((pm = priceRegex.exec(line)) !== null) {
-                    const val = parseFloat(pm[1].replace(/\./g, '').replace(',', '.'));
-                    if (val > 0 && val < 10000000) prices.push(val);
-                }
-
-                // Also try pattern: "– -$5.00" or "-5,00" (negative/discount)
-                const negRegex = /[-–]\s*(?:\$\s*|USD\s*|US\$\s*)([\d\.\,]+)/gi;
-                while ((pm = negRegex.exec(line)) !== null) {
-                    const val = parseFloat(pm[1].replace(/\./g, '').replace(',', '.'));
-                    if (val > 0 && val < 10000000) prices.push(-val);
-                }
-
-                // Also try pattern: "10,00 US$" or "5.00 USD"
-                const usdRegex = /([\d\.\,]+)\s*(?:US\$|USD)/gi;
-                while ((pm = usdRegex.exec(line)) !== null) {
-                    const val = parseFloat(pm[1].replace(/\./g, '').replace(',', '.'));
-                    if (val > 0 && val < 10000000) prices.push(val);
-                }
-
+                const prices = findPrices(line);
                 if (prices.length === 0) continue;
+                const lower = line.toLowerCase().trim();
+                if (/^(total|grand total|sub\s*total|descuento|discount|impuesto|tax|iva|neto| pagado|paid|amount|balance| cobro|charged)/i.test(lower)) continue;
+                if (/^\d{8,13}$/.test(line.replace(/\s/g, ''))) continue;
 
-                // Unit price is usually the last non-negative price
-                const unitPrice = prices.filter(p => p > 0).pop() || Math.abs(prices[prices.length - 1]);
+                const qty = findQty(line);
+                const positivePrices = prices.filter(p => p > 0);
+                const unitPrice = positivePrices.length > 0 ? positivePrices[positivePrices.length - 1] : prices[prices.length - 1];
 
-                // Find quantity
-                let qty = 1;
-                const qtyPatterns = [
-                    /\bx(\d+)\b/i,
-                    /\((?:Cant|Cant\.|Qty|Cant)\.\s*(\d+)\)/i,
-                    /\b(\d+)\s*(UN|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE)\b/i,
-                    /^\s*(\d+)\s+[\w]/,
-                    /\bCant\.\s*(\d+)/i,
-                    /\bQty[:\s]*(\d+)/i
-                ];
-                for (const qp of qtyPatterns) {
-                    const qm = line.match(qp);
-                    if (qm) { qty = parseInt(qm[1]); break; }
-                }
-
-                // Get product name
-                let name = line;
-                name = name.replace(/(?:\$\s*|USD\s*|US\$\s*)[\d\.\,]+/g, '');
-                name = name.replace(/[\d\.\,]+\s*(?:US\$|USD)/g, '');
-                name = name.replace(/\b\d{8,13}\b/g, '');
-                name = name.replace(/\bx(\d+)\b/gi, '');
-                name = name.replace(/\((?:Cant|Cant\.|Qty)\.\s*\d+\)/gi, '');
-                name = name.replace(/\b(\d+)\s*(UN|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC)\b/gi, '');
-                name = name.replace(/^\s*\d+\s*[\-\|\/\*\.]?\s*/, '');
-                name = name.replace(/[\-\|\/\*\.]+\s*$/, '');
-                name = name.replace(/\s+/g, ' ').trim();
-
-                // Remove common suffixes that aren't product names
-                name = name.replace(/\s*[-–]\s*$/, '');
-
+                let name = cleanName(line);
                 if (name.length < 2) continue;
                 if (name.length > 80) name = name.substring(0, 80);
                 if (/^\d+$/.test(name)) continue;
 
-                // Skip if name is just common non-product words
-                const cleanName = name.toLowerCase().trim();
-                if (/^(total|subtotal|descuento|impuesto|iva|neto|pagado|cobro|estado|numero|metodo|periodo|contacto|soporte|archivos|adjuntos|recibo|factura|empresa|correo|asunto)$/.test(cleanName)) continue;
+                const key = name.toLowerCase() + '|' + unitPrice;
+                if (seen.has(key)) continue;
+                seen.add(key);
 
-                facturaProducts.push({
-                    name: name,
-                    qty: qty,
-                    price: Math.abs(unitPrice),
-                    selected: true
-                });
+                facturaProducts.push({ name: name, qty: qty, price: unitPrice, selected: true });
             }
 
-            // Fallback: try to find "Item - Price" patterns
             if (facturaProducts.length === 0) {
-                const itemPriceRegex = /(.+?)\s*[-–]\s*(?:\$\s*|USD\s*|US\$\s*)([\d\.\,]+)/gi;
-                let match;
-                while ((match = itemPriceRegex.exec(text)) !== null) {
-                    const name = match[1].replace(/^\d+\s*[\-\|]?\s*/, '').trim();
-                    const price = parseFloat(match[2].replace(/\./g, '').replace(',', '.'));
-                    if (name.length >= 2 && price > 0 && price < 10000000) {
-                        facturaProducts.push({
-                            name: name.substring(0, 80),
-                            qty: 1,
-                            price: price,
-                            selected: true
-                        });
+                const fb = /(.{3,60}?)\s*[-\u2013:]\s*(?:\$\s*|USD\s*|US\\$\s*)?([\d\.\,]+)\s*(?:USD|US\\$|\$)?/gi;
+                let m;
+                while ((m = fb.exec(text)) !== null) {
+                    let name = cleanName(m[1]);
+                    const price = parseFloat(m[2].replace(/\./g,'').replace(',','.'));
+                    if (name.length >= 3 && price > 0 && price < 10000000) {
+                        const key = name.toLowerCase() + '|' + price;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            facturaProducts.push({ name: name.substring(0, 80), qty: 1, price: price, selected: true });
+                        }
                     }
                 }
             }
@@ -3681,7 +3664,7 @@
             }
 
             document.getElementById('facturaManualSection').style.display = 'block';
-            showToast(facturaProducts.length + ' productos detectados. Puedes agregar mas manualmente.', 'success');
+            showToast(facturaProducts.length + ' productos detectados', 'success');
             facturaRenderResults();
         }
 
