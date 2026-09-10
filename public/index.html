@@ -3574,90 +3574,101 @@
             const seen = new Set();
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            const pureMeta = /^(total|subtotal|grand total|monto pagado|importe pagado|amount paid|balance due|due date|payment|method|card|visa|mastercard|amex|status|account|customer|client|vendor|supplier| store| shop| address|phone|email|fax|zip|city|country|tax|vat| bill to| ship to|sold by|shipped by)$/i;
+            // Parse Chilean invoice table format:
+            // CODE DESCRIPTION QTY UNIT PRICE_WITH_TAX TOTAL
+            // e.g. 3907 PECHUGA DE POLLO COCIDA LP 1 UN 2,455 7.214 17.710
+            const tablePattern = /^(\d{2,6})\s+(.+?)\s+(\d+)\s+(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\s+([\d\.,]+)\s+([\d\.,]+)\s+([\d\.,]+)\s*$/i;
 
-            const findPrices = (str) => {
-                const results = [];
-                let m;
-                const r1 = /(?:\$\s*)([\d\.\,]+)/g;
-                while ((m = r1.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,'').replace(',','.')); if (v > 0 && v < 10000000) results.push(v); }
-                const r2 = /([\d\.\,]+)\s*(?:US\$|USD)/gi;
-                while ((m = r2.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,'').replace(',','.')); if (v > 0 && v < 10000000) results.push(v); }
-                const r3 = /USD\s*([\d\.\,]+)/gi;
-                while ((m = r3.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,'').replace(',','.')); if (v > 0 && v < 10000000) results.push(v); }
-                return results;
-            };
+            // Also try: CODE DESCRIPTION QTY UNIT PRICE_WITH_TAX
+            const tablePattern2 = /^(\d{2,6})\s+(.+?)\s+(\d+)\s+(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\s+([\d\.,]+)\s+([\d\.,]+)\s*$/i;
 
-            const findQty = (str) => {
-                let q = str.match(/\((?:Cant|Cant\.|Qty|Cantidad)\.?\s*(\d+)\)/i);
-                if (q) return parseInt(q[1]);
-                q = str.match(/\bx(\d+)\b/i);
-                if (q) return parseInt(q[1]);
-                q = str.match(/\bCant(?:idad)?[:\s]*(\d+)/i);
-                if (q) return parseInt(q[1]);
-                return 1;
-            };
+            // Also try: CODE DESCRIPTION QTY UNIT PRICE
+            const tablePattern3 = /^(\d{2,6})\s+(.+?)\s+(\d+)\s+(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\s+([\d\.,]+)\s*$/i;
 
-            const cleanName = (str) => {
-                let n = str;
-                n = n.replace(/\$\s*[\d\.\,]+/g, '');
-                n = n.replace(/[\d\.\,]+\s*(?:USD|US\$|CLP)/gi, '');
-                n = n.replace(/USD\s*[\d\.\,]+/gi, '');
-                n = n.replace(/\b\d{8,13}\b/g, '');
-                n = n.replace(/\((?:Cant|Cant\.|Qty|Cantidad)\.?\s*\d+\)/gi, '');
-                n = n.replace(/\bx\d+\b/gi, '');
-                n = n.replace(/\bCant(?:idad)?[:\s]*\d+/gi, '');
-                n = n.replace(/^\s*#?\d+[\.\-\|\s]+/, '');
-                n = n.replace(/^[\s\-\|\/\*\.]+/, '');
-                n = n.replace(/[\s\-\|\/\*\.]+$/, '');
-                n = n.replace(/^(?:Ítem|Item)\s*\/\s*(?:Servicio|Service)\s*[:\-]?\s*/i, '');
-                n = n.replace(/^(?:Servicio|Service)\s*[:\-]?\s*/i, '');
-                n = n.replace(/\s+/g, ' ').trim();
-                return n;
+            const parseChileanPrice = (str) => {
+                // Chilean format: 2.455 = 2455, 17.710 = 17710, 6.950 = 6950
+                return parseInt(str.replace(/\./g, '').replace(/,/g, ''));
             };
 
             for (const line of lines) {
-                if (line.length < 3) continue;
-                const prices = findPrices(line);
-                if (prices.length === 0) continue;
-                const lower = line.toLowerCase().trim();
-                if (/^(total|grand total|sub\s*total|descuento|discount|impuesto|tax|iva|neto| pagado|paid|amount|balance| cobro|charged)/i.test(lower)) continue;
-                if (/^\d{8,13}$/.test(line.replace(/\s/g, ''))) continue;
+                if (line.length < 5) continue;
 
-                const qty = findQty(line);
-                const positivePrices = prices.filter(p => p > 0);
-                const unitPrice = positivePrices.length > 0 ? positivePrices[positivePrices.length - 1] : prices[prices.length - 1];
+                // Try table patterns first (most specific)
+                let match = line.match(tablePattern);
+                if (match) {
+                    const code = match[1];
+                    const desc = match[2].trim();
+                    const qty = parseInt(match[3]);
+                    const unit = match[4];
+                    const unitPrice = parseChileanPrice(match[5]);
 
-                let name = cleanName(line);
-                if (name.length < 2) continue;
-                if (name.length > 80) name = name.substring(0, 80);
-                if (/^\d+$/.test(name)) continue;
-
-                const key = name.toLowerCase() + '|' + unitPrice;
-                if (seen.has(key)) continue;
-                seen.add(key);
-
-                facturaProducts.push({ name: name, qty: qty, price: unitPrice, selected: true });
-            }
-
-            if (facturaProducts.length === 0) {
-                const fb = /(.{3,60}?)\s*[-–:]\s*(?:\$\s*|USD\s*|US\$\s*)?([\d\.\,]+)\s*(?:USD|US\$|\$)?/gi;
-                let m;
-                while ((m = fb.exec(text)) !== null) {
-                    let name = cleanName(m[1]);
-                    const price = parseFloat(m[2].replace(/\./g,'').replace(',','.'));
-                    if (name.length >= 3 && price > 0 && price < 10000000) {
-                        const key = name.toLowerCase() + '|' + price;
+                    if (desc.length >= 2 && unitPrice > 0) {
+                        const key = code + '|' + unitPrice;
                         if (!seen.has(key)) {
                             seen.add(key);
-                            facturaProducts.push({ name: name.substring(0, 80), qty: 1, price: price, selected: true });
+                            facturaProducts.push({ name: desc, qty: qty, price: unitPrice, code: code, selected: true });
+                        }
+                    }
+                    continue;
+                }
+
+                match = line.match(tablePattern2);
+                if (match) {
+                    const code = match[1];
+                    const desc = match[2].trim();
+                    const qty = parseInt(match[3]);
+                    const unitPrice = parseChileanPrice(match[5]);
+
+                    if (desc.length >= 2 && unitPrice > 0) {
+                        const key = code + '|' + unitPrice;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            facturaProducts.push({ name: desc, qty: qty, price: unitPrice, code: code, selected: true });
+                        }
+                    }
+                    continue;
+                }
+
+                match = line.match(tablePattern3);
+                if (match) {
+                    const code = match[1];
+                    const desc = match[2].trim();
+                    const qty = parseInt(match[3]);
+                    const unitPrice = parseChileanPrice(match[5]);
+
+                    if (desc.length >= 2 && unitPrice > 0) {
+                        const key = code + '|' + unitPrice;
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            facturaProducts.push({ name: desc, qty: qty, price: unitPrice, code: code, selected: true });
+                        }
+                    }
+                    continue;
+                }
+
+                // Fallback: line with code + description + price
+                const fallbackMatch = line.match(/^(\d{2,6})\s+(.+?)\s+[\d\.,]+\s*$/);
+                if (fallbackMatch) {
+                    const code = fallbackMatch[1];
+                    let desc = fallbackMatch[2].trim();
+                    // Try to extract price from end
+                    const priceMatch = desc.match(/(\d[\d\.,]*)\s*$/);
+                    if (priceMatch) {
+                        const price = parseChileanPrice(priceMatch[1]);
+                        desc = desc.replace(/\d[\d\.,]*\s*$/, '').trim();
+                        if (desc.length >= 2 && price > 0) {
+                            const key = code + '|' + price;
+                            if (!seen.has(key)) {
+                                seen.add(key);
+                                facturaProducts.push({ name: desc, qty: 1, price: price, code: code, selected: true });
+                            }
                         }
                     }
                 }
             }
 
             if (facturaProducts.length === 0) {
-                showToast('Auto-deteccion fallida. Agrega manualmente.', 'info');
+                showToast('No se detectaron productos. Prueba pegar el texto manualmente.', 'info');
                 document.getElementById('facturaResults').style.display = 'none';
                 document.getElementById('facturaManualSection').style.display = 'block';
                 return;
