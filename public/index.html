@@ -524,6 +524,35 @@
         .filter-tab.filter-pending.active { background: #ef4444; border-color: #ef4444; color: white; }
         .filter-tab.filter-ready.active { background: #10b981; border-color: #10b981; color: white; }
 
+        /* Bar product selector */
+        .bar-product-list {
+            max-height: 300px; overflow-y: auto;
+        }
+        .bar-product-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: var(--radius-sm);
+            cursor: pointer; transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+        .bar-product-item:hover { background: var(--bg-elevated); border-color: var(--border); }
+        .bar-product-item.selected { background: var(--accent-bg); border-color: var(--accent); }
+        .bar-product-item-code {
+            width: 38px; height: 38px; border-radius: var(--radius-sm);
+            background: var(--bg-elevated); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.6rem; color: var(--text-muted);
+            font-family: 'SF Mono', 'Fira Code', monospace; flex-shrink: 0;
+        }
+        .bar-product-item.selected .bar-product-item-code {
+            background: var(--accent); color: white; border-color: var(--accent);
+        }
+        .bar-product-item-info { flex: 1; min-width: 0; }
+        .bar-product-item-name {
+            font-size: 0.8rem; font-weight: 600; color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .bar-product-item-price { font-size: 0.7rem; color: var(--text-muted); }
+
         /* Modal */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
@@ -1228,12 +1257,16 @@
                     Codigos de Barras
                 </h2>
                 <div class="card">
-                    <div class="field">
-                        <label>Seleccionar Producto</label>
-                        <select id="selectProductBar" onchange="showProductBarcodes()"><option value="">-- Elegir --</option></select>
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="searchBarProduct" placeholder="Buscar producto..." oninput="filterBarProducts()">
                     </div>
+                    <div id="barProductList" class="bar-product-list"></div>
                 </div>
                 <div id="barcodeContainer" style="display: none;">
+                    <div class="card" style="margin-bottom:12px;">
+                        <div id="barSelectedInfo" style="display:flex;align-items:center;gap:12px;"></div>
+                    </div>
                     <button class="btn btn-primary btn-full" onclick="printBarcodes()" style="margin-bottom: 12px;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                         Imprimir Todos
@@ -1785,13 +1818,38 @@
             });
         }
 
+        let selectedBarProductId = null;
+
         function populateSelectBar() {
-            const s = document.getElementById('selectProductBar');
-            s.innerHTML = '<option value="">-- Elegir --</option>';
-            products.forEach(p => {
-                const label = p.codigo + ' - ' + truncate(p.descripcion, 28);
-                s.innerHTML += '<option value="' + p.id + '" title="' + p.codigo + ' - ' + p.descripcion + ' ($' + parseInt(p.precio_venta) + ')">' + label + '</option>';
-            });
+            filterBarProducts();
+        }
+
+        function filterBarProducts() {
+            const search = (document.getElementById('searchBarProduct')?.value || '').toLowerCase();
+            const list = document.getElementById('barProductList');
+            const filtered = products.filter(p => !search || p.descripcion.toLowerCase().includes(search) || p.codigo.includes(search));
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.8rem;">No se encontraron productos</div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(p => {
+                const isSelected = selectedBarProductId == p.id;
+                return '<div class="bar-product-item' + (isSelected ? ' selected' : '') + '" onclick="selectBarProduct(' + p.id + ')">' +
+                    '<div class="bar-product-item-code">' + p.codigo + '</div>' +
+                    '<div class="bar-product-item-info">' +
+                        '<div class="bar-product-item-name">' + p.descripcion + '</div>' +
+                        '<div class="bar-product-item-price">$' + parseInt(p.precio_venta) + '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+        }
+
+        function selectBarProduct(id) {
+            selectedBarProductId = id;
+            filterBarProducts();
+            showProductBarcodes();
         }
 
         // ===== SCAN SESSION =====
@@ -2232,14 +2290,18 @@
         }
 
         function showProductBarcodes() {
-            const pid = document.getElementById('selectProductBar').value;
+            const pid = selectedBarProductId;
             const box = document.getElementById('barcodeContainer');
             const grid = document.getElementById('barcodeGrid');
+            const info = document.getElementById('barSelectedInfo');
             if (!pid) { box.style.display = 'none'; return; }
 
             const product = products.find(p => p.id == pid);
             if (!product) return;
             box.style.display = 'block';
+
+            info.innerHTML = '<div class="bar-product-item-code" style="width:42px;height:42px;font-size:0.7rem;">' + product.codigo + '</div>' +
+                '<div><div style="font-weight:700;font-size:0.95rem;">' + product.descripcion + '</div><div style="font-size:0.8rem;color:var(--text-muted);">$' + parseInt(product.precio_venta) + '</div></div>';
 
             grid.innerHTML = '';
             FIELDS.forEach(f => {
@@ -2254,7 +2316,7 @@
         }
 
         function printBarcodes() {
-            const pid = document.getElementById('selectProductBar').value;
+            const pid = selectedBarProductId;
             if (!pid) return;
             const product = products.find(p => p.id == pid);
             if (!product) return;
