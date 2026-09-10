@@ -427,6 +427,12 @@
         .fab:hover { transform: scale(1.05); }
         @media (min-width: 768px) { .fab { bottom: 32px; right: calc(50% - 430px); } }
 
+        /* Toast */
+        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #18181b; color: #fafafa; padding: 10px 20px; border-radius: 8px; font-size: 0.85rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; border: 1px solid #3f3f46; }
+        .toast.show { opacity: 1; }
+        .toast.success { border-color: #10b981; color: #10b981; }
+        .toast.error { border-color: #ef4444; color: #ef4444; }
+
         /* Modal */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
@@ -667,6 +673,9 @@
             .modal-box { max-height: 95vh; }
             .modal-body { padding: 10px; }
             .modal-body svg { height: 40px !important; }
+        }
+        #barcodeModal svg, #familiaBarcodeModal svg {
+            display: block; margin: 0 auto; max-width: 100%; height: auto;
         }
 
         /* Print styles */
@@ -1335,23 +1344,23 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="barcodeModal">
-        <div class="modal-box" style="max-width:min(360px, 90vw);">
+    <div class="modal-overlay" id="barcodeModal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal-box">
             <div class="modal-header">
                 <h2>Codigos de Barras</h2>
                 <button class="btn-icon" onclick="document.getElementById('barcodeModal').classList.remove('active')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div class="modal-body" style="text-align:center;padding:12px;">
-                <div id="barcodeModalInfo" style="margin-bottom:10px;"></div>
-                <div style="margin-bottom:10px;">
-                    <div style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px;font-weight:600;">Codigo</div>
-                    <div style="background:white;padding:8px;border-radius:8px;width:100%;overflow:hidden;"><svg id="barcodeModalCode" preserveAspectRatio="xMidYMid meet"></svg></div>
+            <div class="modal-body" style="padding:16px;">
+                <div id="barcodeModalInfo" style="text-align:center;margin-bottom:14px;"></div>
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;text-align:center;">Codigo</div>
+                    <div style="background:white;padding:12px;border-radius:8px;text-align:center;"><svg id="barcodeModalCode"></svg></div>
                 </div>
                 <div>
-                    <div style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px;font-weight:600;">Descripcion</div>
-                    <div style="background:white;padding:8px;border-radius:8px;width:100%;overflow:hidden;"><svg id="barcodeModalName" preserveAspectRatio="xMidYMid meet"></svg></div>
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;text-align:center;">Descripcion</div>
+                    <div style="background:white;padding:12px;border-radius:8px;text-align:center;"><svg id="barcodeModalName"></svg></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1361,23 +1370,23 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="familiaBarcodeModal">
-        <div class="modal-box" style="max-width:360px;">
+    <div class="modal-overlay" id="familiaBarcodeModal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal-box">
             <div class="modal-header">
                 <h2>Codigo de Familia</h2>
                 <button class="btn-icon" onclick="document.getElementById('familiaBarcodeModal').classList.remove('active')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div class="modal-body" style="text-align:center;padding:16px;">
-                <div id="familiaBarcodeInfo" style="margin-bottom:12px;"></div>
-                <div style="margin-bottom:12px;">
-                    <div style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;font-weight:600;">Codigo</div>
-                    <div style="background:white;padding:8px;border-radius:8px;display:block;overflow:hidden;"><svg id="famModalCode" style="max-width:100%;height:auto;"></svg></div>
+            <div class="modal-body" style="padding:16px;">
+                <div id="familiaBarcodeInfo" style="text-align:center;margin-bottom:14px;"></div>
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;text-align:center;">Codigo</div>
+                    <div style="background:white;padding:12px;border-radius:8px;text-align:center;"><svg id="famModalCode"></svg></div>
                 </div>
                 <div>
-                    <div style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;font-weight:600;">Nombre</div>
-                    <div style="background:white;padding:8px;border-radius:8px;display:block;overflow:hidden;"><svg id="famModalName" style="max-width:100%;height:auto;"></svg></div>
+                    <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;text-align:center;">Nombre</div>
+                    <div style="background:white;padding:12px;border-radius:8px;text-align:center;"><svg id="famModalName"></svg></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1387,6 +1396,8 @@
         </div>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script>
         const API_URL = '/api/productos';
         let products = [];
@@ -1394,6 +1405,14 @@
         let html5QrCode = null;
         let scanCooldown = false;
         let torchOn = false;
+
+        function showToast(msg, type = '') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = 'toast show ' + type;
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => { t.className = 'toast'; }, 2500);
+        }
 
         let scanSession = { productId: null, scannedFields: {}, allAlerted: false };
 
@@ -1473,8 +1492,8 @@
                 if (dupes && !confirm('Ya existe ' + dupes.length + ' producto(s) con codigo "' + data.codigo + '". Deseas guardar de todas formas?')) return;
 
                 const r = await fetch(id ? `${API_URL}/${id}` : API_URL, { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                if (r.ok) { alert(id ? 'Actualizado' : 'Agregado'); this.reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').textContent = 'Registro de Producto'; await loadProducts(); }
-            } catch (e) { alert('Error al guardar'); }
+                if (r.ok) { showToast(id ? 'Actualizado' : 'Agregado', 'success'); this.reset(); document.getElementById('editId').value = ''; document.getElementById('formTitle').textContent = 'Registro de Producto'; await loadProducts(); }
+            } catch (e) { showToast('Error al guardar', 'error'); }
         });
 
         function clearForm() {
@@ -1592,7 +1611,7 @@
 
             if (scanned === total && scanned > 0 && !scanSession.allAlerted) {
                 scanSession.allAlerted = true;
-                alert('¡TODOS LOS CAMPOS ESCANEADOS!\nProducto: ' + selectedProduct.descripcion);
+                showToast('Escaneo completado: ' + selectedProduct.descripcion, 'success');
             }
             if (scanned < total) scanSession.allAlerted = false;
         }
@@ -1774,7 +1793,7 @@
             const file = event.target.files[0];
             if (!file || !selectedProduct) return;
             const reader = new Html5Qrcode("reader");
-            reader.scanFile(file, true).then(decodedText => { onScanSuccess(decodedText); }).catch(() => alert('No se detecto codigo'));
+            reader.scanFile(file, true).then(decodedText => { onScanSuccess(decodedText); }).catch(() => showToast('No se detecto codigo', 'error'));
             event.target.value = '';
         }
 
@@ -1889,11 +1908,11 @@
                 if (res.ok) {
                     localStorage.removeItem('scan_' + id);
                     localStorage.removeItem('ready_' + id);
-                    alert('Producto eliminado');
+                    showToast('Producto eliminado', 'success');
                     await loadProducts();
                     loadProductList();
                 }
-            } catch(e) { alert('Error al eliminar'); }
+            } catch(e) { showToast('Error al eliminar', 'error'); }
         }
 
         function loadScanProgressById(id) {
@@ -2769,7 +2788,7 @@
                 }
                 clearFamiliaForm();
                 loadFamilias();
-            } catch(e) { alert('Error al guardar familia'); }
+            } catch(e) { showToast('Error al guardar familia', 'error'); }
         });
 
         function editFamilia(id) {
@@ -2788,7 +2807,7 @@
             try {
                 await fetch('/api/familias/' + id, { method: 'DELETE' });
                 loadFamilias();
-            } catch(e) { alert('Error al eliminar'); }
+            } catch(e) { showToast('Error al eliminar', 'error'); }
         }
 
         function clearFamiliaForm() {
@@ -2816,29 +2835,45 @@
         function showProductBarcode(codigo, descripcion) {
             const modal = document.getElementById('barcodeModal');
             const info = document.getElementById('barcodeModalInfo');
-            info.innerHTML = '<div style="font-size:0.85rem;font-weight:600;margin-bottom:2px;">' + descripcion + '</div><div style="color:var(--text-secondary);font-size:0.7rem;">' + codigo + '</div>';
+            info.innerHTML = '<div style="font-size:0.95rem;font-weight:700;">' + descripcion + '</div><div style="color:var(--text-secondary);font-size:0.8rem;margin-top:2px;">' + codigo + '</div>';
             modal.classList.add('active');
             const sanitizedName = descripcion.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
             setTimeout(() => {
                 try {
-                    JsBarcode('#barcodeModalCode', codigo, { format: 'CODE128', width: 1.5, height: 45, displayValue: true, fontSize: 11, margin: 4 });
-                    JsBarcode('#barcodeModalName', sanitizedName, { format: 'CODE128', width: 1, height: 45, displayValue: true, fontSize: 9, margin: 4, textMargin: 2 });
-                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:6px;">Error generando codigo</p>'; }
-            }, 100);
+                    JsBarcode('#barcodeModalCode', codigo, {
+                        format: 'CODE128', width: 2, height: 60,
+                        displayValue: true, fontSize: 14, margin: 6,
+                        text: codigo, textAlign: 'center', textPosition: 'bottom'
+                    });
+                    JsBarcode('#barcodeModalName', sanitizedName, {
+                        format: 'CODE128', width: 1.5, height: 60,
+                        displayValue: true, fontSize: 12, margin: 6,
+                        text: sanitizedName, textAlign: 'center', textPosition: 'bottom', textMargin: 4
+                    });
+                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error: ' + e.message + '</p>'; }
+            }, 150);
         }
 
         function showFamiliaBarcode(codigo, nombre) {
             const modal = document.getElementById('familiaBarcodeModal');
             const info = document.getElementById('familiaBarcodeInfo');
-            info.innerHTML = '<div style="font-size:0.9rem;font-weight:600;margin-bottom:2px;">' + nombre + '</div><div style="color:var(--text-secondary);font-size:0.75rem;">' + codigo + '</div>';
+            info.innerHTML = '<div style="font-size:0.95rem;font-weight:700;">' + nombre + '</div><div style="color:var(--text-secondary);font-size:0.8rem;margin-top:2px;">' + codigo + '</div>';
             modal.classList.add('active');
             const sanitizedName = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
             setTimeout(() => {
                 try {
-                    JsBarcode('#famModalCode', codigo, { format: 'CODE128', width: 1.8, height: 50, displayValue: true, fontSize: 12, margin: 4 });
-                    JsBarcode('#famModalName', sanitizedName, { format: 'CODE128', width: 1.2, height: 50, displayValue: true, fontSize: 10, margin: 4, textMargin: 2 });
-                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:6px;">Error generando codigo</p>'; }
-            }, 100);
+                    JsBarcode('#famModalCode', codigo, {
+                        format: 'CODE128', width: 2, height: 60,
+                        displayValue: true, fontSize: 14, margin: 6,
+                        text: codigo, textAlign: 'center', textPosition: 'bottom'
+                    });
+                    JsBarcode('#famModalName', sanitizedName, {
+                        format: 'CODE128', width: 1.5, height: 60,
+                        displayValue: true, fontSize: 12, margin: 6,
+                        text: sanitizedName, textAlign: 'center', textPosition: 'bottom', textMargin: 4
+                    });
+                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error: ' + e.message + '</p>'; }
+            }, 150);
         }
 
         loadProducts();
