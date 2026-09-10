@@ -1306,15 +1306,6 @@
 
                 <div id="gananciasRecomendaciones" style="display:none;margin-bottom:16px;"></div>
 
-                <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
-                    <button class="btn btn-sm btn-primary ganancia-filter active" onclick="gananciaFilter('todos', this)">Todos</button>
-                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('mayor', this)">Mayor Ganancia</button>
-                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('menor', this)">Menor Ganancia</button>
-                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('sobre30', this)">Sobre 30%</button>
-                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('bajo30', this)">Bajo 30%</button>
-                    <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('subir', this)">Subir Precio</button>
-                </div>
-
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
                     <div class="card" style="padding:12px;">
                         <h3 style="font-size:0.8rem;margin-bottom:8px;color:var(--text-secondary);">Top 10 Mayor Ganancia</h3>
@@ -1332,9 +1323,17 @@
                 </div>
 
                 <div class="card">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                         <h3 style="font-size:0.85rem;">Detalle de Ganancias</h3>
                         <span id="gananciasCount" style="font-size:0.7rem;color:var(--text-muted);"></span>
+                    </div>
+                    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">
+                        <button class="btn btn-sm btn-primary ganancia-filter active" onclick="gananciaFilter('todos', this)">Todos</button>
+                        <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('mayor', this)">Mayor Ganancia</button>
+                        <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('menor', this)">Menor Ganancia</button>
+                        <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('sobre30', this)">Sobre 30%</button>
+                        <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('bajo30', this)">Bajo 30%</button>
+                        <button class="btn btn-sm btn-outline ganancia-filter" onclick="gananciaFilter('subir', this)">Subir Precio</button>
                     </div>
                     <div style="overflow-x:auto;">
                         <table id="gananciasTable" style="width:100%;font-size:0.78rem;border-collapse:collapse;">
