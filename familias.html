@@ -71,8 +71,8 @@
             setTimeout(() => {
                 try {
                     const sanitizedName = f.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-                    JsBarcode('#bc-code-' + i, f.code, { format: 'CODE128', width: 2.5, height: 80, displayValue: true, fontSize: 16, margin: 8 });
-                    JsBarcode('#bc-name-' + i, sanitizedName, { format: 'CODE128', width: 2, height: 80, displayValue: true, fontSize: 14, margin: 8, textMargin: 4 });
+                    JsBarcode('#bc-code-' + i, f.code, { format: 'CODE128', width: 2.5, height: 80, displayValue: true, fontSize: 16, margin: 10 });
+                    JsBarcode('#bc-name-' + i, sanitizedName, { format: 'CODE128', width: 2, height: 80, displayValue: true, fontSize: 14, margin: 10 });
                 } catch(e) { console.log('Error barcode ' + i + ':', e); }
             }, 50 + i * 10);
         });

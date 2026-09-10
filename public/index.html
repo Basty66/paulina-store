@@ -1934,7 +1934,7 @@
             const formats = ["CODE128", "CODE39", "EAN13", "EAN8"];
             for (const fmt of formats) {
                 try {
-                    JsBarcode('#' + svgId, value, { format: fmt, width: 2.5, height: 80, displayValue: true, fontSize: 14, margin: 8 });
+                    JsBarcode('#' + svgId, value, { format: fmt, width: 2.5, height: 80, displayValue: true, fontSize: 14, margin: 10 });
                     return true;
                 } catch (e) { /* try next format */ }
             }
@@ -2827,20 +2827,6 @@
             document.getElementById('familiaFormTitle').textContent = 'Nueva Familia';
         }
 
-        function showFamiliaBarcode(codigo, nombre) {
-            const modal = document.getElementById('familiaBarcodeModal');
-            const info = document.getElementById('familiaBarcodeInfo');
-            info.innerHTML = '<div style="font-size:0.95rem;font-weight:600;margin-bottom:2px;">' + nombre + '</div><div style="color:var(--text-secondary);font-size:0.8rem;">' + codigo + '</div>';
-            modal.classList.add('active');
-            const sanitizedName = nombre.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-            setTimeout(() => {
-                try {
-                    JsBarcode('#famModalCode', codigo, { format: 'CODE128', width: 2, height: 60, displayValue: true, fontSize: 14, margin: 6 });
-                    JsBarcode('#famModalName', sanitizedName, { format: 'CODE128', width: 1.5, height: 60, displayValue: true, fontSize: 11, margin: 6, textMargin: 3 });
-                } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:6px;">Error generando codigo</p>'; }
-            }, 100);
-        }
-
         function showProductBarcode(codigo, descripcion) {
             const modal = document.getElementById('barcodeModal');
             const info = document.getElementById('barcodeModalInfo');
@@ -2851,13 +2837,11 @@
                 try {
                     JsBarcode('#barcodeModalCode', codigo, {
                         format: 'CODE128', width: 2.5, height: 80,
-                        displayValue: true, fontSize: 16, margin: 8,
-                        text: codigo, textAlign: 'center', textPosition: 'bottom'
+                        displayValue: true, fontSize: 16, margin: 10
                     });
                     JsBarcode('#barcodeModalName', sanitizedName, {
                         format: 'CODE128', width: 2, height: 80,
-                        displayValue: true, fontSize: 14, margin: 8,
-                        text: sanitizedName, textAlign: 'center', textPosition: 'bottom', textMargin: 4
+                        displayValue: true, fontSize: 14, margin: 10
                     });
                 } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error: ' + e.message + '</p>'; }
             }, 150);
@@ -2873,13 +2857,11 @@
                 try {
                     JsBarcode('#famModalCode', codigo, {
                         format: 'CODE128', width: 2.5, height: 80,
-                        displayValue: true, fontSize: 16, margin: 8,
-                        text: codigo, textAlign: 'center', textPosition: 'bottom'
+                        displayValue: true, fontSize: 16, margin: 10
                     });
                     JsBarcode('#famModalName', sanitizedName, {
                         format: 'CODE128', width: 2, height: 80,
-                        displayValue: true, fontSize: 14, margin: 8,
-                        text: sanitizedName, textAlign: 'center', textPosition: 'bottom', textMargin: 4
+                        displayValue: true, fontSize: 14, margin: 10
                     });
                 } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error: ' + e.message + '</p>'; }
             }, 150);
