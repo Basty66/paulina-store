@@ -677,6 +677,10 @@
         #barcodeModal svg, #familiaBarcodeModal svg {
             display: block; margin: 0 auto; max-width: 100%; height: auto;
         }
+        .barcode-wrap {
+            background: white; padding: 12px; border-radius: 8px;
+            text-align: center; overflow: hidden; width: 100%;
+        }
 
         /* Print styles */
         @media print {
@@ -688,6 +692,11 @@
             }
             #barcodeModal, #barcodeModal * { visibility: visible !important; }
             #barcodeModal {
+                position: fixed; top: 0; left: 0; width: 100%;
+                background: white; padding: 20px; z-index: 9999;
+            }
+            #familiaBarcodeModal, #familiaBarcodeModal * { visibility: visible !important; }
+            #familiaBarcodeModal {
                 position: fixed; top: 0; left: 0; width: 100%;
                 background: white; padding: 20px; z-index: 9999;
             }
@@ -1356,11 +1365,11 @@
                 <div id="barcodeModalInfo" style="text-align:center;margin-bottom:14px;"></div>
                 <div style="margin-bottom:14px;">
                     <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;text-align:center;">Codigo</div>
-                    <div style="background:white;padding:12px;border-radius:8px;text-align:center;"><svg id="barcodeModalCode"></svg></div>
+                    <div class="barcode-wrap"><svg id="barcodeModalCode"></svg></div>
                 </div>
                 <div>
                     <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;text-align:center;">Descripcion</div>
-                    <div style="background:white;padding:12px;border-radius:8px;text-align:center;"><svg id="barcodeModalName"></svg></div>
+                    <div class="barcode-wrap"><svg id="barcodeModalName"></svg></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1382,11 +1391,11 @@
                 <div id="familiaBarcodeInfo" style="text-align:center;margin-bottom:14px;"></div>
                 <div style="margin-bottom:14px;">
                     <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;text-align:center;">Codigo</div>
-                    <div style="background:white;padding:12px;border-radius:8px;text-align:center;"><svg id="famModalCode"></svg></div>
+                    <div class="barcode-wrap"><svg id="famModalCode"></svg></div>
                 </div>
                 <div>
                     <div style="font-size:0.65rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:6px;font-weight:600;text-align:center;">Nombre</div>
-                    <div style="background:white;padding:12px;border-radius:8px;text-align:center;"><svg id="famModalName"></svg></div>
+                    <div class="barcode-wrap"><svg id="famModalName"></svg></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -2838,6 +2847,9 @@
             info.innerHTML = '<div style="font-size:0.95rem;font-weight:700;">' + descripcion + '</div><div style="color:var(--text-secondary);font-size:0.8rem;margin-top:2px;">' + codigo + '</div>';
             modal.classList.add('active');
             const sanitizedName = descripcion.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+            const nameLen = sanitizedName.length;
+            const nameWidth = nameLen > 30 ? 0.8 : nameLen > 20 ? 1 : 1.2;
+            const nameFontSize = nameLen > 30 ? 8 : nameLen > 20 ? 9 : 10;
             setTimeout(() => {
                 try {
                     JsBarcode('#barcodeModalCode', codigo, {
@@ -2846,8 +2858,8 @@
                         text: codigo, textAlign: 'center', textPosition: 'bottom'
                     });
                     JsBarcode('#barcodeModalName', sanitizedName, {
-                        format: 'CODE128', width: 1.5, height: 60,
-                        displayValue: true, fontSize: 12, margin: 6,
+                        format: 'CODE128', width: nameWidth, height: 60,
+                        displayValue: true, fontSize: nameFontSize, margin: 6,
                         text: sanitizedName, textAlign: 'center', textPosition: 'bottom', textMargin: 4
                     });
                 } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error: ' + e.message + '</p>'; }
