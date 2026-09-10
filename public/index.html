@@ -3247,8 +3247,10 @@
         // ===== FACTURAS / INVOICE SCANNER =====
         let facturaProducts = [];
         let facturaImage = null;
+        let facturaProcessing = false;
 
         function facturaCapture(type) {
+            if (facturaProcessing) { showToast('Espera a que termine el procesamiento', 'info'); return; }
             if (type === 'camera') {
                 const input = document.getElementById('facturaFileInput');
                 input.setAttribute('capture', 'environment');
@@ -3267,6 +3269,7 @@
         async function facturaHandleFile(event) {
             const file = event.target.files[0];
             if (!file) return;
+            event.target.value = '';
             const reader = new FileReader();
             reader.onload = async (e) => {
                 facturaImage = e.target.result;
@@ -3278,42 +3281,62 @@
         }
 
         async function facturaOCR() {
-            document.getElementById('facturaProgress').style.display = 'block';
-            document.getElementById('facturaStatus').textContent = 'Cargando motor OCR...';
-            document.getElementById('facturaProgressBar').style.width = '10%';
+            if (facturaProcessing) return;
+            if (!facturaImage) { showToast('No hay imagen para procesar', 'info'); return; }
 
+            facturaProcessing = true;
+            document.getElementById('facturaProgress').style.display = 'block';
+            document.getElementById('facturaStatus').textContent = 'Iniciando OCR...';
+            document.getElementById('facturaProgressBar').style.width = '5%';
+            document.getElementById('btnFacturaCam').disabled = true;
+
+            let worker = null;
             try {
-                const worker = await Tesseract.createWorker('spa+eng', 1, {
+                worker = await Tesseract.createWorker('spa+eng', 1, {
                     logger: (m) => {
                         if (m.status === 'recognizing text') {
                             const pct = Math.round(m.progress * 100);
                             document.getElementById('facturaProgressBar').style.width = pct + '%';
-                            document.getElementById('facturaStatus').textContent = 'Leyendo texto... ' + pct + '%';
+                            document.getElementById('facturaStatus').textContent = 'Leyendo... ' + pct + '%';
+                        } else if (m.status === 'loading tesseract core') {
+                            document.getElementById('facturaStatus').textContent = 'Cargando motor...';
+                        } else if (m.status === 'initializing tesseract') {
+                            document.getElementById('facturaStatus').textContent = 'Preparando...';
+                        } else if (m.status === 'loading language traineddata') {
+                            document.getElementById('facturaStatus').textContent = 'Cargando idioma...';
                         }
                     }
                 });
 
-                document.getElementById('facturaProgressBar').style.width = '30%';
                 document.getElementById('facturaStatus').textContent = 'Analizando imagen...';
+                document.getElementById('facturaProgressBar').style.width = '50%';
 
-                const result = await worker.recognize(facturaImage, {
-                    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
-                    preserve_interword_spaces: 1
-                });
-                const text = result.data.text;
+                const result = await worker.recognize(facturaImage);
+                const text = result.data.text || '';
 
                 document.getElementById('facturaProgressBar').style.width = '100%';
-                document.getElementById('facturaStatus').textContent = 'Texto extraido correctamente';
+                document.getElementById('facturaStatus').textContent = 'Listo!';
 
-                document.getElementById('facturaRawText').style.display = 'block';
-                document.getElementById('facturaRawContent').textContent = text;
-
-                await facturaParse(text);
-                await worker.terminate();
+                if (text.trim().length > 0) {
+                    document.getElementById('facturaRawText').style.display = 'block';
+                    document.getElementById('facturaRawContent').textContent = text;
+                    await facturaParse(text);
+                } else {
+                    showToast('No se pudo leer texto. Intenta con mejor iluminacion.', 'info');
+                }
             } catch (err) {
                 console.error('OCR error:', err);
-                document.getElementById('facturaStatus').textContent = 'Error al procesar imagen';
-                showToast('Error al procesar la imagen', 'error');
+                document.getElementById('facturaStatus').textContent = 'Error al procesar';
+                showToast('Error: ' + (err.message || 'No se pudo procesar la imagen'), 'error');
+            } finally {
+                if (worker) {
+                    try { await worker.terminate(); } catch(e) {}
+                }
+                facturaProcessing = false;
+                document.getElementById('btnFacturaCam').disabled = false;
+                setTimeout(() => {
+                    document.getElementById('facturaProgress').style.display = 'none';
+                }, 1500);
             }
         }
 
