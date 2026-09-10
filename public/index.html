@@ -1511,9 +1511,9 @@
             </div>
             <div class="modal-body" id="pendingModalBody" style="padding:0 16px 16px;max-height:60vh;overflow-y:auto;"></div>
             <div class="modal-footer" style="border-top:none;flex-wrap:wrap;gap:6px;">
-                <button class="btn btn-primary" onclick="syncReadyToServer()" style="flex:1;min-width:120px;">
+                <button class="btn btn-primary" onclick="showPendingProducts();showToast('Actualizado','success')" style="flex:1;min-width:120px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-                    Sincronizar
+                    Actualizar
                 </button>
                 <button class="btn btn-outline" onclick="exportPending()" style="flex:1;min-width:120px;">Exportar</button>
                 <button class="btn btn-outline" onclick="document.getElementById('pendingModal').classList.remove('active')">Cerrar</button>
@@ -2038,41 +2038,25 @@
 
         // ===== PRODUCT LIST =====
         function isProductReady(id) {
-            return localStorage.getItem('ready_' + id) === 'true';
+            const p = products.find(x => x.id == id);
+            return p && parseFloat(p.precio_compra) > 0;
         }
 
         async function toggleProductReady(id, e) {
             e.stopPropagation();
-            const current = isProductReady(id);
-            const newVal = !current;
-            localStorage.setItem('ready_' + id, newVal);
-            try { await fetch('/api/ready', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ productId: id, ready: newVal }) }); } catch(e) {}
-            loadProductList();
         }
 
         async function syncReadyFromServer() {
-            try {
-                const res = await fetch('/api/ready');
-                const data = await res.json();
-                data.forEach(r => { localStorage.setItem('ready_' + r.product_id, r.ready); });
-            } catch(e) {}
+            // Ready status is now based on precio_compra > 0, no sync needed
         }
 
         async function syncReadyToServer() {
-            showSpinner('Sincronizando productos...');
+            showSpinner('Actualizando estados...');
             try {
-                let synced = 0;
-                for (const p of products) {
-                    const val = localStorage.getItem('ready_' + p.id);
-                    if (val === 'true') {
-                        await fetch('/api/ready', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ productId: p.id, ready: true }) });
-                        synced++;
-                    }
-                }
                 hideSpinner();
-                showToast(synced + ' productos sincronizados', 'success');
+                showToast('Estados actualizados', 'success');
                 showPendingProducts();
-            } catch(e) { hideSpinner(); showToast('Error al sincronizar', 'error'); }
+            } catch(e) { hideSpinner(); showToast('Error', 'error'); }
         }
 
         function renderProductCard(p) {
