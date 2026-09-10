@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto } = require('./database');
+const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto, getFamilias, addFamilia, updateFamilia, deleteFamilia } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -47,6 +47,45 @@ app.delete('/api/productos/:id', async (req, res) => {
         res.json({ message: 'Producto eliminado correctamente' });
     } catch (error) {
         res.status(500).json({ error: 'Error al eliminar producto' });
+    }
+});
+
+// ===== FAMILIAS API =====
+app.get('/api/familias', async (req, res) => {
+    try {
+        const familias = await getFamilias();
+        res.json(familias);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener familias' });
+    }
+});
+
+app.post('/api/familias', async (req, res) => {
+    try {
+        const nuevaFamilia = await addFamilia(req.body);
+        res.status(201).json(nuevaFamilia);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al agregar familia' });
+    }
+});
+
+app.put('/api/familias/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const familiaActualizada = await updateFamilia(id, req.body);
+        res.json(familiaActualizada);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al actualizar familia' });
+    }
+});
+
+app.delete('/api/familias/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await deleteFamilia(id);
+        res.json({ message: 'Familia eliminada correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al eliminar familia' });
     }
 });
 

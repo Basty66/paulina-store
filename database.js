@@ -8,7 +8,7 @@ const pool = new Pool({
     }
 });
 
-// Crear tabla de productos (solo si no existe)
+// Crear tablas
 async function initDatabase() {
     try {
         await pool.query(`
@@ -26,6 +26,15 @@ async function initDatabase() {
                 proveedor VARCHAR(100),
                 stock INTEGER DEFAULT 0,
                 stock_critico INTEGER DEFAULT 0,
+                fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS familias (
+                id SERIAL PRIMARY KEY,
+                codigo VARCHAR(10) UNIQUE NOT NULL,
+                nombre VARCHAR(100) NOT NULL,
+                tipo VARCHAR(50) DEFAULT 'NO USA TECLA',
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
@@ -88,10 +97,61 @@ async function deleteProducto(id) {
     }
 }
 
+// ===== FAMILIAS =====
+async function getFamilias() {
+    try {
+        const result = await pool.query('SELECT * FROM familias ORDER BY id ASC');
+        return result.rows;
+    } catch (error) {
+        console.error('Error al obtener familias:', error);
+        throw error;
+    }
+}
+
+async function addFamilia(data) {
+    try {
+        const result = await pool.query(
+            'INSERT INTO familias (codigo, nombre, tipo) VALUES ($1, $2, $3) RETURNING *',
+            [data.codigo, data.nombre, data.tipo]
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error al agregar familia:', error);
+        throw error;
+    }
+}
+
+async function updateFamilia(id, data) {
+    try {
+        const result = await pool.query(
+            'UPDATE familias SET codigo = $1, nombre = $2, tipo = $3 WHERE id = $4 RETURNING *',
+            [data.codigo, data.nombre, data.tipo, id]
+        );
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error al actualizar familia:', error);
+        throw error;
+    }
+}
+
+async function deleteFamilia(id) {
+    try {
+        await pool.query('DELETE FROM familias WHERE id = $1', [id]);
+        return true;
+    } catch (error) {
+        console.error('Error al eliminar familia:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     initDatabase,
     getProductos,
     addProducto,
     updateProducto,
-    deleteProducto
+    deleteProducto,
+    getFamilias,
+    addFamilia,
+    updateFamilia,
+    deleteFamilia
 };

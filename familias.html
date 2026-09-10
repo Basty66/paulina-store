@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Familias de Productos - Paulina Store</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: #09090b; color: #fafafa; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 20px; color: #10b981; }
+        .subtitle { text-align: center; color: #71717a; font-size: 0.9rem; margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 600px; margin: 0 auto; }
+        .card { background: #18181b; border: 1px solid #3f3f46; border-radius: 12px; padding: 24px; }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .card-num { font-size: 1.8rem; font-weight: 800; color: #10b981; }
+        .card-name { font-size: 1.2rem; font-weight: 600; color: #fafafa; }
+        .barcode-row { display: flex; flex-direction: column; gap: 20px; }
+        .barcode-item { text-align: center; }
+        .barcode-item label { display: block; font-size: 0.75rem; color: #71717a; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; font-weight: 600; }
+        .barcode-item svg { background: white; padding: 12px; border-radius: 8px; }
+        .card .tipo { font-size: 0.65rem; color: #52525b; margin-top: 12px; text-align: center; }
+        @media print { body { background: white; color: black; } .card { border-color: #ccc; page-break-inside: avoid; } .card-name { color: #000; } .card-num { color: #10b981; } }
+    </style>
+</head>
+<body>
+    <h1>Familias de Productos</h1>
+    <p class="subtitle">Escanea el codigo y luego el nombre para auto-completar</p>
+    <div class="grid" id="grid"></div>
+
+    <script>
+        const families = [
+            { code: "90001", name: "Alimentos Básicos" },
+            { code: "90002", name: "Lácteos y Huevo" },
+            { code: "90003", name: "Carnes y Aves" },
+            { code: "90004", name: "Embutidos y Fiambres" },
+            { code: "90005", name: "Pescados y Mariscos" },
+            { code: "90006", name: "Frutas y Verduras" },
+            { code: "90007", name: "Pan y Repostería" },
+            { code: "90008", name: "Bebidas sin Alcohol" },
+            { code: "90009", name: "Bebidas Alcohólicas" },
+            { code: "90010", name: "Café y Té" },
+            { code: "90011", name: "Snacks y Dulces" },
+            { code: "90012", name: "Congelados" },
+            { code: "90013", name: "Conservas" },
+            { code: "90014", name: "Limpieza" },
+            { code: "90015", name: "Higiene Personal" },
+            { code: "90016", name: "Farmacia" },
+            { code: "90017", name: "Bebés" },
+            { code: "90018", name: "Mascotas" },
+            { code: "90019", name: "Tabaco" },
+            { code: "90020", name: "Papelería y Utensilios" }
+        ];
+
+        const grid = document.getElementById('grid');
+        families.forEach((f, i) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML =
+                '<div class="card-header">' +
+                    '<div class="card-num">' + f.code + '</div>' +
+                    '<div class="card-name">' + f.name + '</div>' +
+                '</div>' +
+                '<div class="barcode-row">' +
+                    '<div class="barcode-item"><label>Codigo</label><svg id="bc-code-' + i + '"></svg></div>' +
+                    '<div class="barcode-item"><label>Nombre</label><svg id="bc-name-' + i + '"></svg></div>' +
+                '</div>' +
+                '<div class="tipo">TIPO FAMILIA: NO USA TECLA</div>';
+            grid.appendChild(card);
+
+            setTimeout(() => {
+                try {
+                    const sanitizedName = f.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+                    JsBarcode('#bc-code-' + i, f.code, { format: 'CODE128', width: 2.5, height: 80, displayValue: true, fontSize: 18, margin: 10 });
+                    JsBarcode('#bc-name-' + i, sanitizedName, { format: 'CODE128', width: 2, height: 80, displayValue: true, fontSize: 14, margin: 10, textMargin: 6 });
+                } catch(e) { console.log('Error barcode ' + i + ':', e); }
+            }, 50 + i * 10);
+        });
+    </script>
+</body>
+</html>
