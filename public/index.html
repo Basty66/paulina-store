@@ -1417,6 +1417,20 @@
                         <div id="facturaDetected"></div>
                     </div>
                 </div>
+
+                <div id="facturaManualSection" style="display:none;">
+                    <div class="card">
+                        <h3 style="font-size:0.85rem;margin-bottom:8px;">Agregar Manualmente</h3>
+                        <p style="font-size:0.7rem;color:var(--text-muted);margin-bottom:8px;">Copia el texto de abajo y pega el nombre y precio de cada producto.</p>
+                        <div style="display:grid;grid-template-columns:1fr 80px 80px;gap:6px;margin-bottom:8px;">
+                            <input type="text" id="manualName" placeholder="Nombre producto" style="padding:6px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.78rem;background:var(--bg-elevated);color:var(--text);">
+                            <input type="number" id="manualQty" placeholder="Cant" value="1" min="1" style="padding:6px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.78rem;background:var(--bg-elevated);color:var(--text);">
+                            <input type="number" id="manualPrice" placeholder="Precio" style="padding:6px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.78rem;background:var(--bg-elevated);color:var(--text);">
+                        </div>
+                        <button class="btn btn-primary btn-full" onclick="facturaAddManual()">+ Agregar Producto</button>
+                        <div id="manualList" style="margin-top:8px;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -3660,12 +3674,14 @@
             }
 
             if (facturaProducts.length === 0) {
-                showToast('No se detectaron productos. Intenta con otra imagen o PDF.', 'info');
+                showToast('Auto-deteccion fallida. Agrega manualmente.', 'info');
                 document.getElementById('facturaResults').style.display = 'none';
+                document.getElementById('facturaManualSection').style.display = 'block';
                 return;
             }
 
-            showToast(facturaProducts.length + ' productos detectados', 'success');
+            document.getElementById('facturaManualSection').style.display = 'block';
+            showToast(facturaProducts.length + ' productos detectados. Puedes agregar mas manualmente.', 'success');
             facturaRenderResults();
         }
 
@@ -3745,6 +3761,72 @@
             document.getElementById('facturaPreview').style.display = 'none';
             document.getElementById('facturaProgress').style.display = 'none';
             document.getElementById('facturaRawText').style.display = 'none';
+            document.getElementById('facturaManualSection').style.display = 'none';
+        }
+
+        let manualProducts = [];
+
+        function facturaAddManual() {
+            const name = document.getElementById('manualName').value.trim();
+            const qty = parseInt(document.getElementById('manualQty').value) || 1;
+            const price = parseInt(document.getElementById('manualPrice').value) || 0;
+            if (!name) { showToast('Ingresa el nombre del producto', 'info'); return; }
+            if (price <= 0) { showToast('Ingresa un precio valido', 'info'); return; }
+
+            manualProducts.push({ name, qty, price });
+            document.getElementById('manualName').value = '';
+            document.getElementById('manualPrice').value = '';
+            document.getElementById('manualQty').value = '1';
+            facturaRenderManual();
+        }
+
+        function facturaRenderManual() {
+            const list = document.getElementById('manualList');
+            if (manualProducts.length === 0) { list.innerHTML = ''; return; }
+
+            list.innerHTML = manualProducts.map((p, i) =>
+                '<div style="display:flex;align-items:center;gap:6px;padding:6px;background:var(--bg-elevated);border-radius:var(--radius-sm);margin-bottom:4px;">' +
+                    '<span style="flex:1;font-size:0.78rem;font-weight:600;">' + truncate(p.name, 25) + '</span>' +
+                    '<span style="font-size:0.7rem;color:var(--text-muted);">x' + p.qty + '</span>' +
+                    '<span style="font-size:0.7rem;font-weight:700;color:var(--accent);">$' + p.price + '</span>' +
+                    '<button onclick="facturaRemoveManual(' + i + ')" style="background:none;border:none;color:var(--danger);cursor:pointer;padding:2px;">✕</button>' +
+                '</div>'
+            ).join('') +
+            '<button class="btn btn-primary btn-full" style="margin-top:8px;" onclick="facturaAddManualToSystem()">Agregar ' + manualProducts.length + ' Productos al Sistema</button>';
+        }
+
+        function facturaRemoveManual(i) {
+            manualProducts.splice(i, 1);
+            facturaRenderManual();
+        }
+
+        async function facturaAddManualToSystem() {
+            let added = 0;
+            for (const p of manualProducts) {
+                const existingCodes = products.map(x => parseInt(x.codigo)).filter(n => !isNaN(n));
+                const nextCode = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 100000;
+                try {
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            codigo: String(nextCode),
+                            descripcion: p.name,
+                            precioCompra: p.price,
+                            precioVenta: Math.round(p.price * 1.3),
+                            precioMayor: 0, cantidadMayor: 1,
+                            tipo: 'UNITARIO', descuento: 0,
+                            familia: 'ABARROTES', proveedor: '',
+                            stock: p.qty, stockCritico: 0
+                        })
+                    });
+                    if (res.ok) added++;
+                } catch (e) { console.error(e); }
+            }
+            showToast(added + ' productos agregados', 'success');
+            manualProducts = [];
+            facturaRenderManual();
+            await loadProducts();
         }
 
         function startTour() {
