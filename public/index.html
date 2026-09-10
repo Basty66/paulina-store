@@ -662,6 +662,12 @@
         @media (max-width: 360px) {
             #barcodeModal .modal-body svg { max-width: 100%; height: auto; }
         }
+        @media (orientation: landscape) and (max-height: 500px) {
+            .modal-overlay { padding: 8px; align-items: flex-start; padding-top: 8px; }
+            .modal-box { max-height: 95vh; }
+            .modal-body { padding: 10px; }
+            .modal-body svg { height: 40px !important; }
+        }
 
         /* Print styles */
         @media print {
@@ -1330,22 +1336,22 @@
     </div>
 
     <div class="modal-overlay" id="barcodeModal">
-        <div class="modal-box" style="max-width:360px;">
+        <div class="modal-box" style="max-width:min(360px, 90vw);">
             <div class="modal-header">
                 <h2>Codigos de Barras</h2>
                 <button class="btn-icon" onclick="document.getElementById('barcodeModal').classList.remove('active')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div class="modal-body" style="text-align:center;padding:16px;">
-                <div id="barcodeModalInfo" style="margin-bottom:12px;"></div>
-                <div style="margin-bottom:12px;">
-                    <div style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;font-weight:600;">Codigo</div>
-                    <div style="background:white;padding:8px;border-radius:8px;display:block;overflow:hidden;"><svg id="barcodeModalCode" style="max-width:100%;height:auto;"></svg></div>
+            <div class="modal-body" style="text-align:center;padding:12px;">
+                <div id="barcodeModalInfo" style="margin-bottom:10px;"></div>
+                <div style="margin-bottom:10px;">
+                    <div style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px;font-weight:600;">Codigo</div>
+                    <div style="background:white;padding:8px;border-radius:8px;width:100%;overflow:hidden;"><svg id="barcodeModalCode" preserveAspectRatio="xMidYMid meet"></svg></div>
                 </div>
                 <div>
-                    <div style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;font-weight:600;">Descripcion</div>
-                    <div style="background:white;padding:8px;border-radius:8px;display:block;overflow:hidden;"><svg id="barcodeModalName" style="max-width:100%;height:auto;"></svg></div>
+                    <div style="font-size:0.6rem;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px;font-weight:600;">Descripcion</div>
+                    <div style="background:white;padding:8px;border-radius:8px;width:100%;overflow:hidden;"><svg id="barcodeModalName" preserveAspectRatio="xMidYMid meet"></svg></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -2810,13 +2816,13 @@
         function showProductBarcode(codigo, descripcion) {
             const modal = document.getElementById('barcodeModal');
             const info = document.getElementById('barcodeModalInfo');
-            info.innerHTML = '<div style="font-size:0.9rem;font-weight:600;margin-bottom:2px;">' + descripcion + '</div><div style="color:var(--text-secondary);font-size:0.75rem;">' + codigo + '</div>';
+            info.innerHTML = '<div style="font-size:0.85rem;font-weight:600;margin-bottom:2px;">' + descripcion + '</div><div style="color:var(--text-secondary);font-size:0.7rem;">' + codigo + '</div>';
             modal.classList.add('active');
             const sanitizedName = descripcion.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
             setTimeout(() => {
                 try {
-                    JsBarcode('#barcodeModalCode', codigo, { format: 'CODE128', width: 1.8, height: 50, displayValue: true, fontSize: 12, margin: 4 });
-                    JsBarcode('#barcodeModalName', sanitizedName, { format: 'CODE128', width: 1.2, height: 50, displayValue: true, fontSize: 10, margin: 4, textMargin: 2 });
+                    JsBarcode('#barcodeModalCode', codigo, { format: 'CODE128', width: 1.5, height: 45, displayValue: true, fontSize: 11, margin: 4 });
+                    JsBarcode('#barcodeModalName', sanitizedName, { format: 'CODE128', width: 1, height: 45, displayValue: true, fontSize: 9, margin: 4, textMargin: 2 });
                 } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:6px;">Error generando codigo</p>'; }
             }, 100);
         }
