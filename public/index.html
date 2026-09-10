@@ -1934,7 +1934,7 @@
             const formats = ["CODE128", "CODE39", "EAN13", "EAN8"];
             for (const fmt of formats) {
                 try {
-                    JsBarcode('#' + svgId, value, { format: fmt, width: 1.5, height: 50, displayValue: true, fontSize: 11, margin: 5 });
+                    JsBarcode('#' + svgId, value, { format: fmt, width: 2.5, height: 80, displayValue: true, fontSize: 14, margin: 8 });
                     return true;
                 } catch (e) { /* try next format */ }
             }
@@ -2847,19 +2847,16 @@
             info.innerHTML = '<div style="font-size:0.95rem;font-weight:700;">' + descripcion + '</div><div style="color:var(--text-secondary);font-size:0.8rem;margin-top:2px;">' + codigo + '</div>';
             modal.classList.add('active');
             const sanitizedName = descripcion.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
-            const nameLen = sanitizedName.length;
-            const nameWidth = nameLen > 30 ? 0.8 : nameLen > 20 ? 1 : 1.2;
-            const nameFontSize = nameLen > 30 ? 8 : nameLen > 20 ? 9 : 10;
             setTimeout(() => {
                 try {
                     JsBarcode('#barcodeModalCode', codigo, {
-                        format: 'CODE128', width: 2, height: 60,
-                        displayValue: true, fontSize: 14, margin: 6,
+                        format: 'CODE128', width: 2.5, height: 80,
+                        displayValue: true, fontSize: 16, margin: 8,
                         text: codigo, textAlign: 'center', textPosition: 'bottom'
                     });
                     JsBarcode('#barcodeModalName', sanitizedName, {
-                        format: 'CODE128', width: nameWidth, height: 60,
-                        displayValue: true, fontSize: nameFontSize, margin: 6,
+                        format: 'CODE128', width: 2, height: 80,
+                        displayValue: true, fontSize: 14, margin: 8,
                         text: sanitizedName, textAlign: 'center', textPosition: 'bottom', textMargin: 4
                     });
                 } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error: ' + e.message + '</p>'; }
@@ -2875,13 +2872,13 @@
             setTimeout(() => {
                 try {
                     JsBarcode('#famModalCode', codigo, {
-                        format: 'CODE128', width: 2, height: 60,
-                        displayValue: true, fontSize: 14, margin: 6,
+                        format: 'CODE128', width: 2.5, height: 80,
+                        displayValue: true, fontSize: 16, margin: 8,
                         text: codigo, textAlign: 'center', textPosition: 'bottom'
                     });
                     JsBarcode('#famModalName', sanitizedName, {
-                        format: 'CODE128', width: 1.5, height: 60,
-                        displayValue: true, fontSize: 12, margin: 6,
+                        format: 'CODE128', width: 2, height: 80,
+                        displayValue: true, fontSize: 14, margin: 8,
                         text: sanitizedName, textAlign: 'center', textPosition: 'bottom', textMargin: 4
                     });
                 } catch(e) { info.innerHTML += '<p style="color:var(--danger);margin-top:8px;">Error: ' + e.message + '</p>'; }
