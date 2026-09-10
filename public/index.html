@@ -3452,8 +3452,20 @@
 
                     const page = await pdf.getPage(i);
                     const content = await page.getTextContent();
-                    const pageText = content.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n';
+
+                    // Group items by Y position to preserve line structure
+                    let lastY = null;
+                    let lineText = '';
+                    for (const item of content.items) {
+                        const y = Math.round(item.transform[5]);
+                        if (lastY !== null && Math.abs(y - lastY) > 3) {
+                            fullText += lineText.trim() + '\n';
+                            lineText = '';
+                        }
+                        lineText += item.str + ' ';
+                        lastY = y;
+                    }
+                    if (lineText.trim()) fullText += lineText.trim() + '\n';
                 }
 
                 document.getElementById('facturaProgressBar').style.width = '100%';
@@ -3573,7 +3585,7 @@
             facturaProducts = [];
             const seen = new Set();
 
-            const normalized = text.replace(/\t/g, ' ').replace(/ {2,}/g, ' ');
+            const normalized = text.replace(/[\t\r\u00A0\u2000-\u200B\u202F\u205F\u3000]+/g, ' ').replace(/ {2,}/g, ' ');
             const lines = normalized.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
             const unitRe = /\b(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\b/i;
