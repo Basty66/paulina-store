@@ -38,7 +38,8 @@ async function initDatabase() {
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
-        // Insertar familias por defecto si la tabla esta vacia
+        // Limpiar familias con codigos viejos (5 digitos) y re-insertar con 4 digitos
+        await pool.query("DELETE FROM familias WHERE codigo LIKE '9%'");
         const count = await pool.query('SELECT COUNT(*) FROM familias');
         if (parseInt(count.rows[0].count) === 0) {
             const defaults = [
