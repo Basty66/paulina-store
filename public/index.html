@@ -1827,7 +1827,10 @@
         function filterBarProducts() {
             const search = (document.getElementById('searchBarProduct')?.value || '').toLowerCase();
             const list = document.getElementById('barProductList');
-            const filtered = products.filter(p => !search || p.descripcion.toLowerCase().includes(search) || p.codigo.includes(search));
+            const filtered = products.filter(p => {
+                if (!isProductReady(p.id)) return false;
+                return !search || p.descripcion.toLowerCase().includes(search) || p.codigo.includes(search);
+            });
 
             if (filtered.length === 0) {
                 list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.8rem;">No se encontraron productos</div>';
