@@ -3650,17 +3650,12 @@
                 if (seen.has(key)) continue;
                 seen.add(key);
 
-                const tipo = unitMatch[0].toUpperCase();
-                const tipoMap = { 'UN': 'UNITARIO', 'CJ': 'PAQUETE', 'KG': 'PESO', 'LT': 'UNITARIO', 'PAQ': 'PAQUETE', 'CAJ': 'PAQUETE', 'BOT': 'UNITARIO', 'LAT': 'UNITARIO' };
-
                 facturaProducts.push({
                     name: desc.substring(0, 80),
                     qty: qty * packageQty,
                     price: unitPrice,
                     grossPrice: grossPrice,
                     packageQty: packageQty,
-                    unit: tipo,
-                    tipo: tipoMap[tipo] || 'UNITARIO',
                     code: code,
                     selected: true
                 });
@@ -3710,10 +3705,7 @@
                         '<div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap;align-items:center;">' +
                             '<span class="product-card-price" style="margin:0;">$' + parseInt(p.price).toLocaleString('es-CL') + '</span>' +
                             '<span style="font-size:0.7rem;color:var(--text-muted);">Cant: <input type="number" value="' + p.qty + '" min="1" style="width:36px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:4px;color:var(--accent);font-size:0.7rem;font-weight:700;text-align:center;outline:none;padding:2px;" onchange="facturaEditQty(' + i + ', this.value)"></span>' +
-                            (p.packageQty > 1 ?
-                                '<span style="font-size:0.65rem;padding:2px 6px;border-radius:999px;background:var(--warning-bg);color:var(--warning);font-weight:600;">Caja x' + p.packageQty + '</span>' :
-                                '<span style="font-size:0.65rem;padding:2px 6px;border-radius:999px;background:var(--accent-bg);color:var(--accent);font-weight:600;">' + (p.unit || 'UN') + '</span>'
-                            ) +
+                            '<span style="font-size:0.65rem;padding:2px 6px;border-radius:999px;background:var(--accent-bg);color:var(--accent);font-weight:600;">UN</span>' +
                         '</div>' +
                     '</div>' +
                     '<button onclick="facturaRemove(' + i + ')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:6px;border-radius:50%;transition:all 0.2s;flex-shrink:0;" onmouseover="this.style.background=\'var(--danger-bg)\';this.style.color=\'var(--danger)\'" onmouseout="this.style.background=\'none\';this.style.color=\'var(--text-muted)\'" title="Eliminar">' +
@@ -3756,9 +3748,9 @@
                             descripcion: p.name,
                             precioCompra: p.price,
                             precioVenta: Math.round(p.price * 1.3),
-                            precioMayor: p.packageQty > 1 ? Math.round(p.price * 1.15) : 0,
-                            cantidadMayor: p.packageQty > 1 ? p.packageQty : 1,
-                            tipo: p.tipo || 'UNITARIO',
+                            precioMayor: 0,
+                            cantidadMayor: 1,
+                            tipo: 'UNITARIO',
                             descuento: 0,
                             familia: 'ABARROTES',
                             proveedor: '',
