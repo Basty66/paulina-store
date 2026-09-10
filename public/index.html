@@ -433,6 +433,30 @@
         .toast.success { border-color: #10b981; color: #10b981; }
         .toast.error { border-color: #ef4444; color: #ef4444; }
 
+        /* Pending list */
+        .pending-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px; border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .pending-item:last-child { border-bottom: none; }
+        .pending-item:hover { background: var(--bg-elevated); }
+        .pending-item-code {
+            width: 40px; height: 40px; border-radius: var(--radius-sm);
+            background: var(--danger-bg); color: var(--danger);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.65rem; flex-shrink: 0;
+            border: 1px solid var(--danger);
+        }
+        .pending-item-info { flex: 1; min-width: 0; }
+        .pending-item-name {
+            font-size: 0.85rem; font-weight: 600; color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .pending-item-price {
+            font-size: 0.75rem; color: var(--text-muted); margin-top: 1px;
+        }
+
         /* Modal */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
@@ -1413,16 +1437,22 @@
     <div id="toast" class="toast"></div>
 
     <div class="modal-overlay" id="pendingModal" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h2>Productos Pendientes</h2>
+        <div class="modal-box" style="max-width:480px;">
+            <div class="modal-header" style="border-bottom:none;padding-bottom:0;">
+                <div>
+                    <h2 style="margin-bottom:2px;">Pendientes</h2>
+                    <span id="pendingCount" style="font-size:0.75rem;color:var(--text-muted);"></span>
+                </div>
                 <button class="btn-icon" onclick="document.getElementById('pendingModal').classList.remove('active')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div class="modal-body" id="pendingModalBody" style="max-height:60vh;overflow-y:auto;"></div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="exportPending()">Exportar</button>
+            <div class="modal-body" id="pendingModalBody" style="padding:0 16px 16px;max-height:55vh;overflow-y:auto;"></div>
+            <div class="modal-footer" style="border-top:none;">
+                <button class="btn btn-outline" onclick="exportPending()" style="flex:1;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Exportar .txt
+                </button>
                 <button class="btn btn-outline" onclick="document.getElementById('pendingModal').classList.remove('active')">Cerrar</button>
             </div>
         </div>
@@ -1446,17 +1476,31 @@
 
         function showPendingProducts() {
             const body = document.getElementById('pendingModalBody');
+            const countEl = document.getElementById('pendingCount');
             const pending = products.filter(p => !isProductReady(p.id)).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
+
+            countEl.textContent = pending.length + ' de ' + products.length + ' productos';
+
             if (pending.length === 0) {
-                body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-secondary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin:0 auto 12px;display:block;opacity:0.3;"><circle cx="12" cy="12" r="10"/><polyline points="16 8 12 12 8 8"/></svg><p>No hay productos pendientes</p></div>';
+                body.innerHTML = '<div style="text-align:center;padding:40px 16px;color:var(--text-muted);">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px;margin:0 auto 12px;display:block;opacity:0.4;"><circle cx="12" cy="12" r="10"/><polyline points="16 8 12 12 8 8"/></svg>' +
+                    '<p style="font-size:0.85rem;">Todos los productos estan listos</p></div>';
             } else {
-                body.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:10px 14px;background:var(--danger-bg);border-radius:var(--radius-sm);border:1px solid var(--danger);">' +
-                    '<span style="font-weight:700;color:var(--danger);">' + pending.length + ' pendiente' + (pending.length > 1 ? 's' : '') + '</span>' +
-                    '<span style="font-size:0.75rem;color:var(--text-secondary);">' + products.length + ' total</span></div>' +
-                    pending.map((p, i) => '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);' + (i === pending.length - 1 ? 'border-bottom:none;' : '') + '">' +
-                        '<div style="width:32px;height:32px;border-radius:var(--radius-sm);background:var(--danger-bg);display:flex;align-items:center;justify-content:center;color:var(--danger);font-weight:700;font-size:0.65rem;flex-shrink:0;">' + p.codigo + '</div>' +
-                        '<div style="flex:1;min-width:0;"><div style="font-weight:600;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + p.descripcion + '</div><div style="font-size:0.7rem;color:var(--text-muted);">$' + parseInt(p.precio_venta) + '</div></div>' +
-                    '</div>').join('');
+                let html = '';
+                pending.forEach((p, i) => {
+                    const showHeader = i === 0 || pending[i].descripcion[0].toUpperCase() !== pending[i-1].descripcion[0].toUpperCase();
+                    if (showHeader) {
+                        html += '<div style="font-size:0.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;padding:8px 14px 4px;background:var(--bg-elevated);margin:0 -16px;border-bottom:1px solid var(--border);">' + pending[i].descripcion[0].toUpperCase() + '</div>';
+                    }
+                    html += '<div class="pending-item">' +
+                        '<div class="pending-item-code">' + p.codigo + '</div>' +
+                        '<div class="pending-item-info">' +
+                            '<div class="pending-item-name">' + p.descripcion + '</div>' +
+                            '<div class="pending-item-price">$' + parseInt(p.precio_venta) + '</div>' +
+                        '</div>' +
+                    '</div>';
+                });
+                body.innerHTML = html;
             }
             document.getElementById('pendingModal').classList.add('active');
         }
