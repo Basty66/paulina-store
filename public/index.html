@@ -3572,95 +3572,77 @@
         function facturaParse(text) {
             facturaProducts = [];
             const seen = new Set();
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            // Parse Chilean invoice table format:
-            // CODE DESCRIPTION QTY UNIT PRICE_WITH_TAX TOTAL
-            // e.g. 3907 PECHUGA DE POLLO COCIDA LP 1 UN 2,455 7.214 17.710
-            const tablePattern = /^(\d{2,6})\s+(.+?)\s+(\d+)\s+(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\s+([\d\.,]+)\s+([\d\.,]+)\s+([\d\.,]+)\s*$/i;
+            const normalized = text.replace(/\t/g, ' ').replace(/ +/g, ' ');
+            const lines = normalized.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            // Also try: CODE DESCRIPTION QTY UNIT PRICE_WITH_TAX
-            const tablePattern2 = /^(\d{2,6})\s+(.+?)\s+(\d+)\s+(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\s+([\d\.,]+)\s+([\d\.,]+)\s*$/i;
+            const unitWords = ['UN','CJ','KG','LT','ML','GR','PAQ','CAJ','BOT','LAT','PZA','DOC','FARD','ROLLO','BOLSA','CAJA','ENVASE','BI'];
+            const unitRe = /\b(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\b/i;
 
-            // Also try: CODE DESCRIPTION QTY UNIT PRICE
-            const tablePattern3 = /^(\d{2,6})\s+(.+?)\s+(\d+)\s+(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\s+([\d\.,]+)\s*$/i;
-
-            const parseChileanPrice = (str) => {
-                // Chilean format: 2.455 = 2455, 17.710 = 17710, 6.950 = 6950
-                return parseInt(str.replace(/\./g, '').replace(/,/g, ''));
+            const parsePrice = (s) => {
+                if (!s) return 0;
+                let cleaned = s.replace(/\./g, '').replace(/,/g, '');
+                return parseInt(cleaned) || 0;
             };
 
             for (const line of lines) {
                 if (line.length < 5) continue;
 
-                // Try table patterns first (most specific)
-                let match = line.match(tablePattern);
-                if (match) {
-                    const code = match[1];
-                    const desc = match[2].trim();
-                    const qty = parseInt(match[3]);
-                    const unit = match[4];
-                    const unitPrice = parseChileanPrice(match[5]);
+                const unitMatch = line.match(unitRe);
+                if (!unitMatch) continue;
 
-                    if (desc.length >= 2 && unitPrice > 0) {
-                        const key = code + '|' + unitPrice;
-                        if (!seen.has(key)) {
-                            seen.add(key);
-                            facturaProducts.push({ name: desc, qty: qty, price: unitPrice, code: code, selected: true });
-                        }
-                    }
-                    continue;
+                const unitPos = unitMatch.index;
+                const before = line.substring(0, unitPos).trim();
+                const after = line.substring(unitPos + unitMatch[0].length).trim();
+
+                const codeMatch = before.match(/^(\d{2,6})\b/);
+                if (!codeMatch) continue;
+
+                const code = codeMatch[1];
+                const descPart = before.substring(codeMatch[0].length).trim();
+
+                const qtyMatch = descPart.match(/(\d+)\s*$/);
+                let qty = 1;
+                let desc = descPart;
+                if (qtyMatch) {
+                    qty = parseInt(qtyMatch[1]);
+                    desc = descPart.substring(0, descPart.length - qtyMatch[0].length).trim();
                 }
 
-                match = line.match(tablePattern2);
-                if (match) {
-                    const code = match[1];
-                    const desc = match[2].trim();
-                    const qty = parseInt(match[3]);
-                    const unitPrice = parseChileanPrice(match[5]);
+                const priceMatch = after.match(/^([\d\.\\,]+)/);
+                if (!priceMatch) continue;
 
-                    if (desc.length >= 2 && unitPrice > 0) {
-                        const key = code + '|' + unitPrice;
-                        if (!seen.has(key)) {
-                            seen.add(key);
-                            facturaProducts.push({ name: desc, qty: qty, price: unitPrice, code: code, selected: true });
-                        }
-                    }
-                    continue;
-                }
+                const price = parsePrice(priceMatch[1]);
+                if (price <= 0 || price > 10000000) continue;
 
-                match = line.match(tablePattern3);
-                if (match) {
-                    const code = match[1];
-                    const desc = match[2].trim();
-                    const qty = parseInt(match[3]);
-                    const unitPrice = parseChileanPrice(match[5]);
+                if (desc.length < 2) continue;
 
-                    if (desc.length >= 2 && unitPrice > 0) {
-                        const key = code + '|' + unitPrice;
-                        if (!seen.has(key)) {
-                            seen.add(key);
-                            facturaProducts.push({ name: desc, qty: qty, price: unitPrice, code: code, selected: true });
-                        }
-                    }
-                    continue;
-                }
+                const key = code + '|' + price;
+                if (seen.has(key)) continue;
+                seen.add(key);
 
-                // Fallback: line with code + description + price
-                const fallbackMatch = line.match(/^(\d{2,6})\s+(.+?)\s+[\d\.,]+\s*$/);
-                if (fallbackMatch) {
-                    const code = fallbackMatch[1];
-                    let desc = fallbackMatch[2].trim();
-                    // Try to extract price from end
-                    const priceMatch = desc.match(/(\d[\d\.,]*)\s*$/);
-                    if (priceMatch) {
-                        const price = parseChileanPrice(priceMatch[1]);
-                        desc = desc.replace(/\d[\d\.,]*\s*$/, '').trim();
-                        if (desc.length >= 2 && price > 0) {
+                facturaProducts.push({
+                    name: desc.substring(0, 80),
+                    qty: qty,
+                    price: price,
+                    code: code,
+                    selected: true
+                });
+            }
+
+            if (facturaProducts.length === 0) {
+                for (const line of lines) {
+                    if (line.length < 5) continue;
+                    const m = line.match(/^(\d{2,6})\s+(.+?)\s+(\d[\d\.\\,]*)\s*$/);
+                    if (m) {
+                        const code = m[1];
+                        const desc = m[2].trim();
+                        const price = parsePrice(m[3]);
+                        if (desc.length >= 2 && price > 0 && price < 10000000) {
                             const key = code + '|' + price;
                             if (!seen.has(key)) {
                                 seen.add(key);
-                                facturaProducts.push({ name: desc, qty: 1, price: price, code: code, selected: true });
+                                facturaProducts.push({ name: desc.substring(0, 80), qty: 1, price: price, code: code, selected: true });
                             }
                         }
                     }
@@ -3668,7 +3650,7 @@
             }
 
             if (facturaProducts.length === 0) {
-                showToast('No se detectaron productos. Prueba pegar el texto manualmente.', 'info');
+                showToast('No se detectaron productos. Prueba pegar el texto.', 'info');
                 document.getElementById('facturaResults').style.display = 'none';
                 document.getElementById('facturaManualSection').style.display = 'block';
                 return;
