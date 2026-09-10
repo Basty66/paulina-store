@@ -3580,11 +3580,11 @@
                 const results = [];
                 let m;
                 const r1 = /(?:\$\s*)([\d\.\,]+)/g;
-                while ((m = r1.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,\'\').replace(\',\',\'.\')); if (v > 0 && v < 10000000) results.push(v); }
-                const r2 = /([\d\.\,]+)\s*(?:US\\$|USD)/gi;
-                while ((m = r2.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,\'\').replace(\',\',\'.\')); if (v > 0 && v < 10000000) results.push(v); }
+                while ((m = r1.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,'').replace(',','.')); if (v > 0 && v < 10000000) results.push(v); }
+                const r2 = /([\d\.\,]+)\s*(?:US\$|USD)/gi;
+                while ((m = r2.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,'').replace(',','.')); if (v > 0 && v < 10000000) results.push(v); }
                 const r3 = /USD\s*([\d\.\,]+)/gi;
-                while ((m = r3.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,\'\').replace(\',\',\'.\')); if (v > 0 && v < 10000000) results.push(v); }
+                while ((m = r3.exec(str)) !== null) { const v = parseFloat(m[1].replace(/\./g,'').replace(',','.')); if (v > 0 && v < 10000000) results.push(v); }
                 return results;
             };
 
@@ -3601,7 +3601,7 @@
             const cleanName = (str) => {
                 let n = str;
                 n = n.replace(/\$\s*[\d\.\,]+/g, '');
-                n = n.replace(/[\d\.\,]+\s*(?:USD|US\\$|CLP)/gi, '');
+                n = n.replace(/[\d\.\,]+\s*(?:USD|US\$|CLP)/gi, '');
                 n = n.replace(/USD\s*[\d\.\,]+/gi, '');
                 n = n.replace(/\b\d{8,13}\b/g, '');
                 n = n.replace(/\((?:Cant|Cant\.|Qty|Cantidad)\.?\s*\d+\)/gi, '');
@@ -3610,7 +3610,7 @@
                 n = n.replace(/^\s*#?\d+[\.\-\|\s]+/, '');
                 n = n.replace(/^[\s\-\|\/\*\.]+/, '');
                 n = n.replace(/[\s\-\|\/\*\.]+$/, '');
-                n = n.replace(/^(?:\\u00cdtem|Item)\s*\/\s*(?:Servicio|Service)\s*[:\-]?\s*/i, '');
+                n = n.replace(/^(?:Ítem|Item)\s*\/\s*(?:Servicio|Service)\s*[:\-]?\s*/i, '');
                 n = n.replace(/^(?:Servicio|Service)\s*[:\-]?\s*/i, '');
                 n = n.replace(/\s+/g, ' ').trim();
                 return n;
@@ -3641,7 +3641,7 @@
             }
 
             if (facturaProducts.length === 0) {
-                const fb = /(.{3,60}?)\s*[-\u2013:]\s*(?:\$\s*|USD\s*|US\\$\s*)?([\d\.\,]+)\s*(?:USD|US\\$|\$)?/gi;
+                const fb = /(.{3,60}?)\s*[-–:]\s*(?:\$\s*|USD\s*|US\$\s*)?([\d\.\,]+)\s*(?:USD|US\$|\$)?/gi;
                 let m;
                 while ((m = fb.exec(text)) !== null) {
                     let name = cleanName(m[1]);
