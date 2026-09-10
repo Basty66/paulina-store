@@ -3573,16 +3573,19 @@
             facturaProducts = [];
             const seen = new Set();
 
-            const normalized = text.replace(/\t/g, ' ').replace(/ +/g, ' ');
+            const normalized = text.replace(/\t/g, ' ').replace(/ {2,}/g, ' ');
             const lines = normalized.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            const unitWords = ['UN','CJ','KG','LT','ML','GR','PAQ','CAJ','BOT','LAT','PZA','DOC','FARD','ROLLO','BOLSA','CAJA','ENVASE','BI'];
             const unitRe = /\b(UN|CJ|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE|BI)\b/i;
 
             const parsePrice = (s) => {
                 if (!s) return 0;
-                let cleaned = s.replace(/\./g, '').replace(/,/g, '');
-                return parseInt(cleaned) || 0;
+                return parseInt(s.replace(/\./g, '').replace(/,/g, '')) || 0;
+            };
+
+            const extractNumbers = (str) => {
+                const matches = str.match(/[\d][\d\.,]*/g) || [];
+                return matches.map(m => ({ raw: m, val: parsePrice(m) })).filter(n => n.val > 0);
             };
 
             for (const line of lines) {
@@ -3609,13 +3612,13 @@
                     desc = descPart.substring(0, descPart.length - qtyMatch[0].length).trim();
                 }
 
-                const priceMatch = after.match(/^([\d\.,]+)/);
-                if (!priceMatch) continue;
-
-                const price = parsePrice(priceMatch[1]);
-                if (price <= 0 || price > 10000000) continue;
-
                 if (desc.length < 2) continue;
+
+                const numbers = extractNumbers(after);
+                if (numbers.length < 2) continue;
+
+                const price = numbers[1].val;
+                if (price <= 0 || price > 10000000) continue;
 
                 const key = code + '|' + price;
                 if (seen.has(key)) continue;
