@@ -1713,6 +1713,7 @@
                 document.getElementById('splashStatus').textContent = 'Cargando productos...';
                 const r = await fetch(API_URL);
                 products = await r.json();
+                products.sort((a, b) => a.descripcion.localeCompare(b.descripcion));
                 await syncReadyFromServer();
                 updateStats();
                 document.getElementById('splashStatus').textContent = 'Listo';
@@ -2133,15 +2134,15 @@
             readySection.innerHTML = '';
             pendingSection.innerHTML = '';
 
-            const readyList = [];
-            const pendingList = [];
-
-            products.forEach(p => {
+            const readyList = products.filter(p => {
                 const match = !search || p.descripcion.toLowerCase().includes(search) || p.codigo.includes(search);
-                if (!match) return;
-                if (isProductReady(p.id)) readyList.push(p);
-                else pendingList.push(p);
-            });
+                return match && isProductReady(p.id);
+            }).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
+
+            const pendingList = products.filter(p => {
+                const match = !search || p.descripcion.toLowerCase().includes(search) || p.codigo.includes(search);
+                return match && !isProductReady(p.id);
+            }).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
 
             if (productFilter === 'all' || productFilter === 'ready') {
                 if (readyList.length > 0) {
