@@ -1454,6 +1454,21 @@
 
     <div class="toast-container" id="toastContainer"></div>
 
+    <div class="modal-overlay" id="verifyResultModal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal-box" style="max-width:400px;">
+            <div class="modal-header" id="verifyModalHeader">
+                <h2 id="verifyModalTitle">Verificacion</h2>
+                <button class="btn-icon" onclick="document.getElementById('verifyResultModal').classList.remove('active')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="verifyModalBody" style="padding:20px;text-align:center;"></div>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="btn btn-primary" onclick="document.getElementById('verifyResultModal').classList.remove('active')">OK</button>
+            </div>
+        </div>
+    </div>
+
     <div class="spinner-overlay" id="spinnerOverlay">
         <div class="spinner-box">
             <div class="spinner"></div>
@@ -2482,6 +2497,10 @@
 
             const resultDiv = document.getElementById('verifyResult');
             const statusEl = document.getElementById('verifyStatus');
+            const modal = document.getElementById('verifyResultModal');
+            const modalHeader = document.getElementById('verifyModalHeader');
+            const modalTitle = document.getElementById('verifyModalTitle');
+            const modalBody = document.getElementById('verifyModalBody');
 
             if (matchProduct) {
                 statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Producto encontrado!';
@@ -2490,30 +2509,36 @@
                 const matchLabel = matchType === 'exact' ? 'Coincidencia exacta' :
                                    matchType === 'partial' ? 'Coincidencia parcial' : 'Valor encontrado';
 
-                resultDiv.innerHTML =
-                    '<div class="verify-result match">' +
-                        '<div class="verify-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>' +
-                        '<h3 style="color:var(--accent);">' + matchLabel + '</h3>' +
-                        '<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:8px;">Escaneado: <strong>' + val + '</strong></p>' +
-                        '<div class="verify-result-detail">' +
-                            '<div class="vr-row"><span class="vr-label">Producto</span><span class="vr-value">' + truncate(matchProduct.descripcion, 30) + '</span></div>' +
-                            '<div class="vr-row"><span class="vr-label">Campo</span><span class="vr-value">' + matchField.label + '</span></div>' +
-                            '<div class="vr-row"><span class="vr-label">Codigo</span><span class="vr-value">' + matchProduct.codigo + '</span></div>' +
-                            '<div class="vr-row"><span class="vr-label">Precio Venta</span><span class="vr-value">$' + parseInt(matchProduct.precio_venta) + '</span></div>' +
-                            '<div class="vr-row"><span class="vr-label">Familia</span><span class="vr-value">' + (matchProduct.familia || '-') + '</span></div>' +
-                        '</div>' +
+                modalHeader.style.borderBottom = '2px solid #10b981';
+                modalTitle.textContent = 'Producto Encontrado';
+                modalTitle.style.color = '#10b981';
+                modalBody.innerHTML =
+                    '<div style="margin-bottom:16px;">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" style="width:56px;height:56px;margin:0 auto 12px;display:block;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+                        '<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;">' + matchLabel + '</div>' +
+                        '<div style="font-size:0.7rem;color:var(--text-muted);">Escaneado: <strong>' + val + '</strong></div>' +
+                    '</div>' +
+                    '<div style="text-align:left;background:var(--bg-elevated);border-radius:var(--radius-sm);padding:12px;">' +
+                        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.75rem;color:var(--text-muted);">Producto</span><span style="font-size:0.8rem;font-weight:600;">' + truncate(matchProduct.descripcion, 28) + '</span></div>' +
+                        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.75rem;color:var(--text-muted);">Codigo</span><span style="font-size:0.8rem;font-weight:600;font-family:monospace;">' + matchProduct.codigo + '</span></div>' +
+                        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.75rem;color:var(--text-muted);">Campo</span><span style="font-size:0.8rem;font-weight:600;">' + matchField.label + '</span></div>' +
+                        '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);"><span style="font-size:0.75rem;color:var(--text-muted);">Precio Venta</span><span style="font-size:0.8rem;font-weight:600;color:var(--accent);">$' + parseInt(matchProduct.precio_venta) + '</span></div>' +
+                        '<div style="display:flex;justify-content:space-between;padding:6px 0;"><span style="font-size:0.75rem;color:var(--text-muted);">Familia</span><span style="font-size:0.8rem;font-weight:600;">' + (matchProduct.familia || '-') + '</span></div>' +
                     '</div>';
+                modal.classList.add('active');
             } else {
                 statusEl.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Sin coincidencia';
                 statusEl.className = 'scan-status not-found';
 
-                resultDiv.innerHTML =
-                    '<div class="verify-result no-match">' +
-                        '<div class="verify-result-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>' +
-                        '<h3 style="color:var(--danger);">Sin Coincidencia</h3>' +
-                        '<p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;">Escaneado: <strong>' + val + '</strong></p>' +
-                        '<p style="font-size:0.8rem;">Este codigo no pertenece a ningun producto registrado.</p>' +
-                    '</div>';
+                modalHeader.style.borderBottom = '2px solid #ef4444';
+                modalTitle.textContent = 'No Encontrado';
+                modalTitle.style.color = '#ef4444';
+                modalBody.innerHTML =
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" style="width:56px;height:56px;margin:0 auto 12px;display:block;"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
+                    '<div style="font-size:0.9rem;font-weight:700;color:#ef4444;margin-bottom:8px;">Sin Coincidencia</div>' +
+                    '<div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:4px;">Escaneado: <strong>' + val + '</strong></div>' +
+                    '<div style="font-size:0.8rem;color:var(--text-muted);">Este codigo no pertenece a ningun producto registrado.</div>';
+                modal.classList.add('active');
             }
         }
 
