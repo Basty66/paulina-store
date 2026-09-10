@@ -3609,7 +3609,7 @@
                     desc = descPart.substring(0, descPart.length - qtyMatch[0].length).trim();
                 }
 
-                const priceMatch = after.match(/^([\d\.\\,]+)/);
+                const priceMatch = after.match(/^([\d\.,]+)/);
                 if (!priceMatch) continue;
 
                 const price = parsePrice(priceMatch[1]);
@@ -3633,7 +3633,7 @@
             if (facturaProducts.length === 0) {
                 for (const line of lines) {
                     if (line.length < 5) continue;
-                    const m = line.match(/^(\d{2,6})\s+(.+?)\s+(\d[\d\.\\,]*)\s*$/);
+                    const m = line.match(/^(\d{2,6})\s+(.+?)\s+(\d[\d\.,]*)\s*$/);
                     if (m) {
                         const code = m[1];
                         const desc = m[2].trim();
