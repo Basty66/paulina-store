@@ -1446,7 +1446,7 @@
 
         function showPendingProducts() {
             const body = document.getElementById('pendingModalBody');
-            const pending = products.filter(p => !isProductReady(p.id));
+            const pending = products.filter(p => !isProductReady(p.id)).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
             if (pending.length === 0) {
                 body.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-secondary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;margin:0 auto 12px;display:block;opacity:0.3;"><circle cx="12" cy="12" r="10"/><polyline points="16 8 12 12 8 8"/></svg><p>No hay productos pendientes</p></div>';
             } else {
@@ -1462,7 +1462,7 @@
         }
 
         function exportPending() {
-            const pending = products.filter(p => !isProductReady(p.id));
+            const pending = products.filter(p => !isProductReady(p.id)).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
             if (pending.length === 0) { showToast('No hay pendientes para exportar'); return; }
             let text = 'PRODUCTOS PENDIENTES (' + pending.length + ')\n';
             text += '========================\n\n';
