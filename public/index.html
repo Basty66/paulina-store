@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
         :root {
@@ -210,6 +211,7 @@
             .product-item { flex-direction: column; align-items: stretch; }
             .product-item .product-actions { justify-content: flex-end; }
             #tab-ganancias > div:nth-child(3) { grid-template-columns: 1fr !important; }
+            #tab-facturas .btn { font-size: 0.75rem; padding: 6px 10px; }
         }
 
         .btn-ready {
@@ -1051,6 +1053,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                 Ganancias
             </button>
+            <button class="nav-btn" onclick="showTab('facturas', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+                Facturas
+            </button>
         </nav>
 
         <div class="content">
@@ -1316,6 +1322,73 @@
                             </thead>
                             <tbody id="gananciasBody"></tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Facturas -->
+            <div id="tab-facturas" class="panel">
+                <h2 class="section-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+                    Escanear Factura
+                </h2>
+
+                <div class="card">
+                    <p style="color:var(--text-secondary);font-size:0.8rem;margin-bottom:12px;">
+                        Toma una foto de la factura o sube una imagen. El sistema extrae los productos automaticamente.
+                    </p>
+
+                    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+                        <button class="btn btn-primary" id="btnFacturaCam" onclick="facturaCapture('camera')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            Tomar Foto
+                        </button>
+                        <button class="btn btn-outline" onclick="facturaCapture('gallery')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                            Galeria
+                        </button>
+                        <button class="btn btn-outline" onclick="facturaCapture('paste')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                            Pegar Texto
+                        </button>
+                    </div>
+
+                    <input type="file" id="facturaFileInput" accept="image/*" style="display:none;" onchange="facturaHandleFile(event)">
+                    <textarea id="facturaTextInput" style="display:none;width:100%;min-height:120px;padding:10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-elevated);color:var(--text);font-size:0.8rem;font-family:monospace;resize:vertical;margin-bottom:12px;" placeholder="Pega aqui el texto de la factura..."></textarea>
+                    <button id="facturaParseBtn" class="btn btn-primary" style="display:none;margin-bottom:12px;" onclick="facturaParseText()">Extraer Productos</button>
+
+                    <div id="facturaPreview" style="display:none;margin-bottom:12px;">
+                        <img id="facturaImg" style="width:100%;max-height:200px;object-fit:contain;border-radius:var(--radius-sm);background:#000;">
+                    </div>
+
+                    <div id="facturaProgress" style="display:none;margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                            <div class="spinner" style="width:16px;height:16px;"></div>
+                            <span id="facturaStatus" style="font-size:0.8rem;color:var(--text-secondary);">Procesando...</span>
+                        </div>
+                        <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+                            <div id="facturaProgressBar" style="height:100%;background:var(--accent);width:0%;transition:width 0.3s;"></div>
+                        </div>
+                    </div>
+
+                    <div id="facturaRawText" style="display:none;margin-bottom:12px;">
+                        <details>
+                            <summary style="font-size:0.75rem;color:var(--text-muted);cursor:pointer;margin-bottom:6px;">Ver texto extraido</summary>
+                            <pre id="facturaRawContent" style="font-size:0.7rem;background:var(--bg-elevated);padding:10px;border-radius:var(--radius-sm);overflow-x:auto;max-height:150px;white-space:pre-wrap;word-break:break-all;"></pre>
+                        </details>
+                    </div>
+                </div>
+
+                <div id="facturaResults" style="display:none;">
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <h3 style="font-size:0.85rem;">Productos Detectados</h3>
+                            <div style="display:flex;gap:6px;">
+                                <button class="btn btn-outline" style="font-size:0.7rem;padding:4px 8px;" onclick="facturaSelectAll()">Todos</button>
+                                <button class="btn btn-primary" style="font-size:0.7rem;padding:4px 8px;" onclick="facturaAddSelected()">Agregar Seleccionados</button>
+                            </div>
+                        </div>
+                        <div id="facturaDetected"></div>
                     </div>
                 </div>
             </div>
@@ -1727,6 +1800,7 @@
             if (name === 'productos') loadProductList();
             if (name === 'barras') populateSelectBar();
             if (name === 'ganancias') renderGanancias();
+            if (name === 'facturas') { document.getElementById('facturaResults').style.display = 'none'; }
             if (name === 'escaner') { populateSelectScan(); stopCamera(); }
             if (name === 'verificar') { stopVerifyScanner(); }
             updateSummaryBtn();
@@ -3168,6 +3242,220 @@
                     '<td style="padding:8px 6px;">' + estado + '</td>' +
                 '</tr>';
             }).join('');
+        }
+
+        // ===== FACTURAS / INVOICE SCANNER =====
+        let facturaProducts = [];
+        let facturaImage = null;
+
+        function facturaCapture(type) {
+            if (type === 'camera') {
+                const input = document.getElementById('facturaFileInput');
+                input.setAttribute('capture', 'environment');
+                input.click();
+            } else if (type === 'gallery') {
+                const input = document.getElementById('facturaFileInput');
+                input.removeAttribute('capture');
+                input.click();
+            } else if (type === 'paste') {
+                document.getElementById('facturaTextInput').style.display = 'block';
+                document.getElementById('facturaParseBtn').style.display = 'inline-block';
+                document.getElementById('facturaTextInput').focus();
+            }
+        }
+
+        async function facturaHandleFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                facturaImage = e.target.result;
+                document.getElementById('facturaImg').src = facturaImage;
+                document.getElementById('facturaPreview').style.display = 'block';
+                await facturaOCR();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function facturaOCR() {
+            document.getElementById('facturaProgress').style.display = 'block';
+            document.getElementById('facturaStatus').textContent = 'Cargando motor OCR...';
+            document.getElementById('facturaProgressBar').style.width = '10%';
+
+            try {
+                const worker = await Tesseract.createWorker('spa', 1, {
+                    logger: (m) => {
+                        if (m.status === 'recognizing text') {
+                            const pct = Math.round(m.progress * 100);
+                            document.getElementById('facturaProgressBar').style.width = pct + '%';
+                            document.getElementById('facturaStatus').textContent = 'Leyendo texto... ' + pct + '%';
+                        }
+                    }
+                });
+
+                document.getElementById('facturaProgressBar').style.width = '30%';
+                document.getElementById('facturaStatus').textContent = 'Analizando imagen...';
+
+                const result = await worker.recognize(facturaImage);
+                const text = result.data.text;
+
+                document.getElementById('facturaProgressBar').style.width = '100%';
+                document.getElementById('facturaStatus').textContent = 'Texto extraido correctamente';
+
+                document.getElementById('facturaRawText').style.display = 'block';
+                document.getElementById('facturaRawContent').textContent = text;
+
+                await facturaParse(text);
+                await worker.terminate();
+            } catch (err) {
+                console.error('OCR error:', err);
+                document.getElementById('facturaStatus').textContent = 'Error al procesar imagen';
+                showToast('Error al procesar la imagen', 'error');
+            }
+        }
+
+        function facturaParseText() {
+            const text = document.getElementById('facturaTextInput').value.trim();
+            if (!text) { showToast('Pega el texto primero', 'info'); return; }
+            document.getElementById('facturaRawText').style.display = 'block';
+            document.getElementById('facturaRawContent').textContent = text;
+            facturaParse(text);
+        }
+
+        function facturaParse(text) {
+            facturaProducts = [];
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+            // Chilean invoice patterns
+            // Line: "PRODUCTO X3 $1.990" or "12345 ARROZ 2 $3.500"
+            const pricePattern = /\$[\d\.]+/g;
+            const qtyPattern = /(\d+)\s*(UN|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT)/i;
+
+            for (const line of lines) {
+                // Skip headers, footers, totals
+                if (/^(TOTAL|SUBTOTAL|IVA|NETO|BOLETA|FACTURA|RUT|DIRECCION|TELEFONO|FECHA|HORA|CAJA|CAJERO|VENDEDOR)/i.test(line)) continue;
+                if (line.length < 5) continue;
+
+                const prices = line.match(pricePattern);
+                if (!prices || prices.length === 0) continue;
+
+                // Try to find quantity
+                let qty = 1;
+                const qtyMatch = line.match(qtyPattern);
+                if (qtyMatch) qty = parseInt(qtyMatch[1]);
+
+                // Get last price as unit price
+                const priceStr = prices[prices.length - 1].replace(/[$\.]/g, '');
+                const price = parseInt(priceStr);
+                if (price <= 0 || price > 1000000) continue;
+
+                // Get product name (remove prices, codes, quantities)
+                let name = line;
+                name = name.replace(/\$[\d\.]+/g, '').replace(/\b\d{4,}\b/g, '');
+                name = name.replace(/\b\d+\s*(UN|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT)\b/gi, '');
+                name = name.replace(/^\d+\s*[\-\|]\s*/, '');
+                name = name.replace(/[\-\|]+$/, '');
+                name = name.replace(/\s+/g, ' ').trim();
+
+                if (name.length < 2) continue;
+
+                // Limit name length
+                if (name.length > 80) name = name.substring(0, 80);
+
+                facturaProducts.push({
+                    name: name,
+                    qty: qty,
+                    price: price,
+                    selected: true
+                });
+            }
+
+            if (facturaProducts.length === 0) {
+                showToast('No se detectaron productos. Intenta con otra foto.', 'info');
+                document.getElementById('facturaResults').style.display = 'none';
+                return;
+            }
+
+            showToast(facturaProducts.length + ' productos detectados', 'success');
+            facturaRenderResults();
+        }
+
+        function facturaRenderResults() {
+            const container = document.getElementById('facturaDetected');
+            document.getElementById('facturaResults').style.display = 'block';
+
+            container.innerHTML = facturaProducts.map((p, i) =>
+                '<div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg-elevated);border-radius:var(--radius-sm);margin-bottom:6px;border:1px solid ' + (p.selected ? 'var(--accent)' : 'var(--border)') + ';">' +
+                    '<input type="checkbox" ' + (p.selected ? 'checked' : '') + ' onchange="facturaToggle(' + i + ', this.checked)" style="accent-color:var(--accent);width:18px;height:18px;cursor:pointer;">' +
+                    '<div style="flex:1;min-width:0;">' +
+                        '<input type="text" value="' + p.name.replace(/"/g, '&quot;') + '" onchange="facturaEditName(' + i + ', this.value)" style="width:100%;background:transparent;border:none;color:var(--text);font-size:0.8rem;font-weight:600;padding:2px 0;outline:none;border-bottom:1px dashed transparent;" onfocus="this.style.borderBottomColor=var(--accent)" onblur="this.style.borderBottomColor=\'transparent\'">' +
+                        '<div style="display:flex;gap:12px;margin-top:2px;">' +
+                            '<span style="font-size:0.7rem;color:var(--text-muted);">Cant: <input type="number" value="' + p.qty + '" min="1" style="width:36px;background:transparent;border:none;color:var(--accent);font-size:0.7rem;font-weight:700;text-align:center;outline:none;" onchange="facturaEditQty(' + i + ', this.value)"></span>' +
+                            '<span style="font-size:0.7rem;color:var(--text-muted);">Precio: $<input type="number" value="' + p.price + '" min="0" style="width:60px;background:transparent;border:none;color:var(--accent);font-size:0.7rem;font-weight:700;text-align:center;outline:none;" onchange="facturaEditPrice(' + i + ', this.value)"></span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<button onclick="facturaRemove(' + i + ')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;" title="Eliminar">' +
+                        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+                    '</button>' +
+                '</div>'
+            ).join('');
+        }
+
+        function facturaToggle(i, val) { facturaProducts[i].selected = val; }
+        function facturaEditName(i, val) { facturaProducts[i].name = val; }
+        function facturaEditQty(i, val) { facturaProducts[i].qty = parseInt(val) || 1; }
+        function facturaEditPrice(i, val) { facturaProducts[i].price = parseInt(val) || 0; }
+        function facturaRemove(i) {
+            facturaProducts.splice(i, 1);
+            facturaRenderResults();
+            if (facturaProducts.length === 0) document.getElementById('facturaResults').style.display = 'none';
+        }
+        function facturaSelectAll() {
+            facturaProducts.forEach(p => p.selected = true);
+            facturaRenderResults();
+        }
+
+        async function facturaAddSelected() {
+            const selected = facturaProducts.filter(p => p.selected);
+            if (selected.length === 0) { showToast('Selecciona al menos un producto', 'info'); return; }
+
+            let added = 0;
+            for (const p of selected) {
+                // Auto-generate barcode
+                const existingCodes = products.map(x => parseInt(x.codigo)).filter(n => !isNaN(n));
+                const nextCode = existingCodes.length > 0 ? Math.max(...existingCodes) + 1 : 100000;
+                const codigo = String(nextCode);
+
+                try {
+                    const res = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            codigo: codigo,
+                            descripcion: p.name,
+                            precioCompra: p.price,
+                            precioVenta: Math.round(p.price * 1.3),
+                            precioMayor: 0,
+                            cantidadMayor: 1,
+                            tipo: 'UNITARIO',
+                            descuento: 0,
+                            familia: 'ABARROTES',
+                            proveedor: '',
+                            stock: p.qty,
+                            stockCritico: 0
+                        })
+                    });
+                    if (res.ok) added++;
+                } catch (e) { console.error(e); }
+            }
+
+            showToast(added + ' productos agregados al sistema', 'success');
+            await loadProducts();
+            facturaProducts = [];
+            document.getElementById('facturaResults').style.display = 'none';
+            document.getElementById('facturaPreview').style.display = 'none';
+            document.getElementById('facturaProgress').style.display = 'none';
+            document.getElementById('facturaRawText').style.display = 'none';
         }
 
         function startTour() {
