@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto, getFamilias, addFamilia, updateFamilia, deleteFamilia } = require('./database');
+const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto, getFamilias, addFamilia, updateFamilia, deleteFamilia, getAllReady, setReady } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -86,6 +86,26 @@ app.delete('/api/familias/:id', async (req, res) => {
         res.json({ message: 'Familia eliminada correctamente' });
     } catch (error) {
         res.status(500).json({ error: 'Error al eliminar familia' });
+    }
+});
+
+// ===== PRODUCT READY API =====
+app.get('/api/ready', async (req, res) => {
+    try {
+        const ready = await getAllReady();
+        res.json(ready);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener ready' });
+    }
+});
+
+app.post('/api/ready', async (req, res) => {
+    try {
+        const { productId, ready } = req.body;
+        await setReady(productId, ready);
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al guardar ready' });
     }
 });
 

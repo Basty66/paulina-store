@@ -38,6 +38,13 @@ async function initDatabase() {
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS product_ready (
+                product_id INTEGER PRIMARY KEY,
+                ready BOOLEAN DEFAULT false,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
         // Limpiar familias con codigos viejos (5 digitos) y re-insertar con 4 digitos
         await pool.query("DELETE FROM familias WHERE codigo LIKE '9%' OR codigo LIKE '1%'");
         const count = await pool.query('SELECT COUNT(*) FROM familias');
@@ -175,6 +182,31 @@ async function deleteFamilia(id) {
     }
 }
 
+// ===== PRODUCT READY =====
+async function getAllReady() {
+    try {
+        const result = await pool.query('SELECT product_id, ready FROM product_ready');
+        return result.rows;
+    } catch (error) {
+        console.error('Error al obtener ready:', error);
+        throw error;
+    }
+}
+
+async function setReady(productId, ready) {
+    try {
+        await pool.query(
+            `INSERT INTO product_ready (product_id, ready, updated_at) VALUES ($1, $2, NOW())
+             ON CONFLICT (product_id) DO UPDATE SET ready = $2, updated_at = NOW()`,
+            [productId, ready]
+        );
+        return true;
+    } catch (error) {
+        console.error('Error al guardar ready:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     initDatabase,
     getProductos,
@@ -184,5 +216,7 @@ module.exports = {
     getFamilias,
     addFamilia,
     updateFamilia,
-    deleteFamilia
+    deleteFamilia,
+    getAllReady,
+    setReady
 };
