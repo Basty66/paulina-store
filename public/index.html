@@ -1449,9 +1449,13 @@
             </div>
             <div class="modal-body" id="pendingModalBody" style="padding:0 16px 16px;max-height:55vh;overflow-y:auto;"></div>
             <div class="modal-footer" style="border-top:none;">
+                <button class="btn btn-primary" onclick="syncReadyToServer()" style="flex:1;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    Sincronizar
+                </button>
                 <button class="btn btn-outline" onclick="exportPending()" style="flex:1;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px;vertical-align:middle;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    Exportar .txt
+                    Exportar
                 </button>
                 <button class="btn btn-outline" onclick="document.getElementById('pendingModal').classList.remove('active')">Cerrar</button>
             </div>
@@ -1928,6 +1932,20 @@
                 const data = await res.json();
                 data.forEach(r => { localStorage.setItem('ready_' + r.product_id, r.ready); });
             } catch(e) {}
+        }
+
+        async function syncReadyToServer() {
+            try {
+                let synced = 0;
+                for (const p of products) {
+                    const val = localStorage.getItem('ready_' + p.id);
+                    if (val === 'true') {
+                        await fetch('/api/ready', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ productId: p.id, ready: true }) });
+                        synced++;
+                    }
+                }
+                showToast(synced + ' productos sincronizados', 'success');
+            } catch(e) { showToast('Error al sincronizar', 'error'); }
         }
 
         function renderProductCard(p) {
