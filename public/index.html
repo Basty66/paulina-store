@@ -428,10 +428,47 @@
         @media (min-width: 768px) { .fab { bottom: 32px; right: calc(50% - 430px); } }
 
         /* Toast */
-        .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #18181b; color: #fafafa; padding: 10px 20px; border-radius: 8px; font-size: 0.85rem; z-index: 999; opacity: 0; transition: opacity 0.3s; pointer-events: none; border: 1px solid #3f3f46; }
-        .toast.show { opacity: 1; }
-        .toast.success { border-color: #10b981; color: #10b981; }
-        .toast.error { border-color: #ef4444; color: #ef4444; }
+        .toast-container {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            z-index: 999; display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none; align-items: center;
+        }
+        .toast {
+            background: var(--bg-card); color: var(--text-primary);
+            padding: 10px 18px; border-radius: 10px; font-size: 0.8rem;
+            font-weight: 500; opacity: 0; transition: all 0.3s ease;
+            pointer-events: auto; display: flex; align-items: center; gap: 8px;
+            border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            transform: translateY(10px);
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { border-color: #10b981; }
+        .toast.success .toast-icon { color: #10b981; }
+        .toast.error { border-color: #ef4444; }
+        .toast.error .toast-icon { color: #ef4444; }
+        .toast.info { border-color: #3b82f6; }
+        .toast.info .toast-icon { color: #3b82f6; }
+        .toast-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* Loading spinner */
+        .spinner-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            display: none; align-items: center; justify-content: center;
+            z-index: 300; backdrop-filter: blur(4px);
+        }
+        .spinner-overlay.active { display: flex; }
+        .spinner-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 32px 40px; text-align: center;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+        }
+        .spinner {
+            width: 36px; height: 36px; border: 3px solid var(--border);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 14px;
+        }
+        .spinner-text { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         /* Pending/Ready modal list */
         .pm-section-header {
@@ -1129,9 +1166,14 @@
                         <div class="stat-value" id="statCodes">0</div>
                         <div class="stat-label">Codigos</div>
                     </div>
+                    <div class="stat" onclick="showReadyProducts()" style="cursor:pointer;" title="Ver listos">
+                        <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+                        <div class="stat-value" id="statReady" style="color:#10b981;">0</div>
+                        <div class="stat-label">Listos</div>
+                    </div>
                     <div class="stat" onclick="showPendingProducts()" style="cursor:pointer;" title="Ver pendientes">
                         <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-                        <div class="stat-value" id="statPending">0</div>
+                        <div class="stat-value" id="statPending" style="color:#ef4444;">0</div>
                         <div class="stat-label">Pendientes</div>
                     </div>
                     <div class="stat">
@@ -1447,20 +1489,27 @@
         </div>
     </div>
 
-    <div id="toast" class="toast"></div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="spinner-overlay" id="spinnerOverlay">
+        <div class="spinner-box">
+            <div class="spinner"></div>
+            <div class="spinner-text" id="spinnerText">Sincronizando...</div>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="pendingModal" onclick="if(event.target===this)this.classList.remove('active')">
-        <div class="modal-box" style="max-width:500px;">
+        <div class="modal-box" style="max-width:480px;">
             <div class="modal-header" style="border-bottom:none;padding-bottom:0;">
                 <div>
-                    <h2 style="margin-bottom:2px;">Productos</h2>
+                    <h2 style="margin-bottom:2px;color:#ef4444;">Pendientes</h2>
                     <span id="pendingCount" style="font-size:0.75rem;color:var(--text-muted);"></span>
                 </div>
                 <button class="btn-icon" onclick="document.getElementById('pendingModal').classList.remove('active')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             </div>
-            <div class="modal-body" id="pendingModalBody" style="padding:0 16px 16px;max-height:65vh;overflow-y:auto;"></div>
+            <div class="modal-body" id="pendingModalBody" style="padding:0 16px 16px;max-height:60vh;overflow-y:auto;"></div>
             <div class="modal-footer" style="border-top:none;flex-wrap:wrap;gap:6px;">
                 <button class="btn btn-primary" onclick="syncReadyToServer()" style="flex:1;min-width:120px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -1468,6 +1517,24 @@
                 </button>
                 <button class="btn btn-outline" onclick="exportPending()" style="flex:1;min-width:120px;">Exportar</button>
                 <button class="btn btn-outline" onclick="document.getElementById('pendingModal').classList.remove('active')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="readyModal" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal-box" style="max-width:480px;">
+            <div class="modal-header" style="border-bottom:none;padding-bottom:0;">
+                <div>
+                    <h2 style="margin-bottom:2px;color:#10b981;">Listos</h2>
+                    <span id="readyCount" style="font-size:0.75rem;color:var(--text-muted);"></span>
+                </div>
+                <button class="btn-icon" onclick="document.getElementById('readyModal').classList.remove('active')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="modal-body" id="readyModalBody" style="padding:0 16px 16px;max-height:60vh;overflow-y:auto;"></div>
+            <div class="modal-footer" style="border-top:none;">
+                <button class="btn btn-outline" onclick="document.getElementById('readyModal').classList.remove('active')">Cerrar</button>
             </div>
         </div>
     </div>
@@ -1481,51 +1548,47 @@
         let torchOn = false;
 
         function showToast(msg, type = '') {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.className = 'toast show ' + type;
-            clearTimeout(t._timer);
-            t._timer = setTimeout(() => { t.className = 'toast'; }, 2500);
+            const container = document.getElementById('toastContainer');
+            const icons = {
+                success: '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+                error: '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+                info: '<svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+            };
+            const t = document.createElement('div');
+            t.className = 'toast ' + type;
+            t.innerHTML = (icons[type] || icons.info) + '<span>' + msg + '</span>';
+            container.appendChild(t);
+            requestAnimationFrame(() => { t.classList.add('show'); });
+            setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => { t.remove(); }, 300);
+            }, 3000);
+        }
+
+        function showSpinner(text) {
+            document.getElementById('spinnerText').textContent = text || 'Cargando...';
+            document.getElementById('spinnerOverlay').classList.add('active');
+        }
+        function hideSpinner() {
+            document.getElementById('spinnerOverlay').classList.remove('active');
         }
 
         function showPendingProducts() {
             const body = document.getElementById('pendingModalBody');
             const countEl = document.getElementById('pendingCount');
-            const ready = products.filter(p => isProductReady(p.id)).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
             const pending = products.filter(p => !isProductReady(p.id)).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
 
-            countEl.textContent = ready.length + ' listos / ' + pending.length + ' pendientes';
-
-            let html = '';
-
-            // READY SECTION
-            html += '<div class="pm-section-header pm-ready-header">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;color:#10b981;"><polyline points="20 6 9 17 4 12"/></svg>' +
-                '<span>LISTOS</span><span class="pm-badge pm-badge-green">' + ready.length + '</span></div>';
-
-            if (ready.length === 0) {
-                html += '<div class="pm-empty">Sin productos listos</div>';
-            } else {
-                ready.forEach(p => {
-                    html += '<div class="pm-item">' +
-                        '<div class="pm-item-code pm-code-green">' + p.codigo + '</div>' +
-                        '<div class="pm-item-info">' +
-                            '<div class="pm-item-name">' + p.descripcion + '</div>' +
-                            '<div class="pm-item-price">$' + parseInt(p.precio_venta) + '</div>' +
-                        '</div>' +
-                    '</div>';
-                });
-            }
-
-            // PENDING SECTION
-            html += '<div class="pm-section-header pm-pending-header">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;color:#ef4444;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
-                '<span>PENDIENTES</span><span class="pm-badge pm-badge-red">' + pending.length + '</span></div>';
+            countEl.textContent = pending.length + ' productos sin completar';
 
             if (pending.length === 0) {
-                html += '<div class="pm-empty">Todos listos</div>';
+                body.innerHTML = '<div class="pm-empty" style="padding:32px;">Todos los productos estan listos</div>';
             } else {
-                pending.forEach(p => {
+                let html = '';
+                pending.forEach((p, i) => {
+                    const showHeader = i === 0 || pending[i].descripcion[0].toUpperCase() !== pending[i-1].descripcion[0].toUpperCase();
+                    if (showHeader) {
+                        html += '<div class="pm-section-header pm-pending-header">' + pending[i].descripcion[0].toUpperCase() + '</div>';
+                    }
                     html += '<div class="pm-item">' +
                         '<div class="pm-item-code pm-code-red">' + p.codigo + '</div>' +
                         '<div class="pm-item-info">' +
@@ -1534,10 +1597,38 @@
                         '</div>' +
                     '</div>';
                 });
+                body.innerHTML = html;
             }
-
-            body.innerHTML = html;
             document.getElementById('pendingModal').classList.add('active');
+        }
+
+        function showReadyProducts() {
+            const body = document.getElementById('readyModalBody');
+            const countEl = document.getElementById('readyCount');
+            const ready = products.filter(p => isProductReady(p.id)).sort((a, b) => a.descripcion.localeCompare(b.descripcion));
+
+            countEl.textContent = ready.length + ' productos completados';
+
+            if (ready.length === 0) {
+                body.innerHTML = '<div class="pm-empty" style="padding:32px;">No hay productos listos</div>';
+            } else {
+                let html = '';
+                ready.forEach((p, i) => {
+                    const showHeader = i === 0 || ready[i].descripcion[0].toUpperCase() !== ready[i-1].descripcion[0].toUpperCase();
+                    if (showHeader) {
+                        html += '<div class="pm-section-header pm-ready-header">' + ready[i].descripcion[0].toUpperCase() + '</div>';
+                    }
+                    html += '<div class="pm-item">' +
+                        '<div class="pm-item-code pm-code-green">' + p.codigo + '</div>' +
+                        '<div class="pm-item-info">' +
+                            '<div class="pm-item-name">' + p.descripcion + '</div>' +
+                            '<div class="pm-item-price">$' + parseInt(p.precio_venta) + '</div>' +
+                        '</div>' +
+                    '</div>';
+                });
+                body.innerHTML = html;
+            }
+            document.getElementById('readyModal').classList.add('active');
         }
 
         function exportPending() {
@@ -1609,10 +1700,12 @@
             const e2 = document.getElementById('statCodes');
             const e3 = document.getElementById('statValue');
             const e4 = document.getElementById('statPending');
+            const e5 = document.getElementById('statReady');
             if (e1) e1.textContent = products.length;
             if (e2) e2.textContent = products.length * 12;
             if (e3) { const t = products.reduce((s, p) => s + parseFloat(p.precio_venta || 0), 0); e3.textContent = '$' + parseInt(t); }
             if (e4) { const pending = products.filter(p => !isProductReady(p.id)).length; e4.textContent = pending; }
+            if (e5) { const ready = products.filter(p => isProductReady(p.id)).length; e5.textContent = ready; }
         }
 
         // ===== FORM =====
@@ -1966,6 +2059,7 @@
         }
 
         async function syncReadyToServer() {
+            showSpinner('Sincronizando productos...');
             try {
                 let synced = 0;
                 for (const p of products) {
@@ -1975,8 +2069,10 @@
                         synced++;
                     }
                 }
+                hideSpinner();
                 showToast(synced + ' productos sincronizados', 'success');
-            } catch(e) { showToast('Error al sincronizar', 'error'); }
+                showPendingProducts();
+            } catch(e) { hideSpinner(); showToast('Error al sincronizar', 'error'); }
         }
 
         function renderProductCard(p) {
