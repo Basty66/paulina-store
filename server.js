@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { GoogleGenAI } = require('@google/genai');
 const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto, getFamilias, addFamilia, updateFamilia, deleteFamilia, getAllReady, setReady, addHistory, getHistory, getHistoryByProduct, getAllScanned, setScanned } = require('./database');
 
 const app = express();
@@ -152,6 +153,54 @@ app.post('/api/scanned', async (req, res) => {
         res.json({ ok: true });
     } catch (error) {
         res.status(500).json({ error: 'Error al guardar escaneado' });
+    }
+});
+
+// OCR con Gemini Vision
+app.post('/api/ocr-factura', async (req, res) => {
+    try {
+        const { image, mimeType } = req.body;
+        if (!image) return res.status(400).json({ error: 'No image provided' });
+
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [{
+                inlineData: {
+                    mimeType: mimeType || 'image/jpeg',
+                    data: image,
+                },
+            }, `Eres un extractor de facturas chilenas.
+Analiza esta imagen de factura y extrae TODOS los productos visibles.
+
+Reglas:
+- El campo "code" es el codigo o numero de articulo
+- El campo "name" es la descripcion del producto
+- El campo "quantity" es la cantidad comprada
+- El campo "unit_price" es el precio bruto de la factura
+- Si la descripcion contiene un paquete como "8x125" o "(x10)", divide el precio entre esa cantidad para obtener precio unitario
+- El campo "total" es el total de la fila
+- Todos los precios son numeros enteros sin puntos ni comas
+- Si un campo no se ve, usa null
+
+Devuelve SOLO el JSON con este formato:
+{
+  "products": [
+    {"code": "3907", "name": "PECHUGA DE POLLO", "quantity": 1, "unit_price": 7214, "total": 17710}
+  ]
+}`],
+            config: {
+                responseMimeType: 'application/json',
+            },
+        });
+
+        const text = response.text;
+        const data = JSON.parse(text);
+        res.json(data);
+    } catch (err) {
+        console.error('Gemini error:', err);
+        res.status(500).json({ error: err.message });
     }
 });
 
