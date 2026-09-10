@@ -507,6 +507,23 @@
         }
         .pm-item-price { font-size: 0.7rem; color: var(--text-muted); }
 
+        /* Filter tabs */
+        .filter-tabs {
+            display: flex; gap: 6px; margin-bottom: 14px;
+        }
+        .filter-tab {
+            flex: 1; padding: 8px 12px; border-radius: var(--radius-sm);
+            border: 1px solid var(--border); background: var(--bg-elevated);
+            color: var(--text-secondary); font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; display: flex;
+            align-items: center; justify-content: center; gap: 4px;
+            font-family: inherit;
+        }
+        .filter-tab:hover { border-color: var(--text-muted); }
+        .filter-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .filter-tab.filter-pending.active { background: #ef4444; border-color: #ef4444; color: white; }
+        .filter-tab.filter-ready.active { background: #10b981; border-color: #10b981; color: white; }
+
         /* Modal */
         .modal-overlay {
             display: none; position: fixed; inset: 0;
@@ -1186,6 +1203,18 @@
                 <div class="search-box">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input type="text" id="searchProduct" placeholder="Buscar por nombre o codigo..." oninput="filterProducts()">
+                </div>
+
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all" onclick="setProductFilter('all', this)">Todos</button>
+                    <button class="filter-tab filter-pending" data-filter="pending" onclick="setProductFilter('pending', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Pendientes
+                    </button>
+                    <button class="filter-tab filter-ready" data-filter="ready" onclick="setProductFilter('ready', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px;"><polyline points="20 6 9 17 4 12"/></svg>
+                        Listos
+                    </button>
                 </div>
 
                 <div id="readySection"></div>
@@ -2088,6 +2117,15 @@
             return card;
         }
 
+        let productFilter = 'all';
+
+        function setProductFilter(filter, btn) {
+            productFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            loadProductList();
+        }
+
         function loadProductList() {
             const search = (document.getElementById('searchProduct')?.value || '').toLowerCase();
             const readySection = document.getElementById('readySection');
@@ -2105,19 +2143,24 @@
                 else pendingList.push(p);
             });
 
-            if (readyList.length > 0) {
-                readySection.innerHTML = '<div class="section-header ready"><h3>Listos</h3><span class="count">' + readyList.length + '</span></div><div class="product-grid"></div>';
-                const grid = readySection.querySelector('.product-grid');
-                readyList.forEach(p => grid.appendChild(renderProductCard(p)));
+            if (productFilter === 'all' || productFilter === 'ready') {
+                if (readyList.length > 0) {
+                    readySection.innerHTML = '<div class="section-header ready"><h3>Listos</h3><span class="count">' + readyList.length + '</span></div><div class="product-grid"></div>';
+                    const grid = readySection.querySelector('.product-grid');
+                    readyList.forEach(p => grid.appendChild(renderProductCard(p)));
+                }
             }
 
-            if (pendingList.length > 0) {
-                pendingSection.innerHTML = '<div class="section-header pending"><h3>Pendientes</h3><span class="count">' + pendingList.length + '</span></div><div class="product-grid"></div>';
-                const grid = pendingSection.querySelector('.product-grid');
-                pendingList.forEach(p => grid.appendChild(renderProductCard(p)));
+            if (productFilter === 'all' || productFilter === 'pending') {
+                if (pendingList.length > 0) {
+                    pendingSection.innerHTML = '<div class="section-header pending"><h3>Pendientes</h3><span class="count">' + pendingList.length + '</span></div><div class="product-grid"></div>';
+                    const grid = pendingSection.querySelector('.product-grid');
+                    pendingList.forEach(p => grid.appendChild(renderProductCard(p)));
+                }
             }
 
-            if (readyList.length === 0 && pendingList.length === 0) {
+            const totalVisible = (productFilter === 'all' || productFilter === 'ready' ? readyList.length : 0) + (productFilter === 'all' || productFilter === 'pending' ? pendingList.length : 0);
+            if (totalVisible === 0) {
                 pendingSection.innerHTML = '<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No se encontraron productos</p></div>';
             }
 
