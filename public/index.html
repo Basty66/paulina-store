@@ -2945,7 +2945,7 @@
             modal.classList.add('active');
 
             try {
-                const res = await fetch(API_URL + '/api/history?limit=100');
+                const res = await fetch('/api/history?limit=100');
                 const history = await res.json();
 
                 if (history.length === 0) {
