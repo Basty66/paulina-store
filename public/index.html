@@ -3283,7 +3283,7 @@
             document.getElementById('facturaProgressBar').style.width = '10%';
 
             try {
-                const worker = await Tesseract.createWorker('spa', 1, {
+                const worker = await Tesseract.createWorker('spa+eng', 1, {
                     logger: (m) => {
                         if (m.status === 'recognizing text') {
                             const pct = Math.round(m.progress * 100);
@@ -3296,7 +3296,10 @@
                 document.getElementById('facturaProgressBar').style.width = '30%';
                 document.getElementById('facturaStatus').textContent = 'Analizando imagen...';
 
-                const result = await worker.recognize(facturaImage);
+                const result = await worker.recognize(facturaImage, {
+                    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+                    preserve_interword_spaces: 1
+                });
                 const text = result.data.text;
 
                 document.getElementById('facturaProgressBar').style.width = '100%';
@@ -3326,48 +3329,87 @@
             facturaProducts = [];
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
 
-            // Chilean invoice patterns
-            // Line: "PRODUCTO X3 $1.990" or "12345 ARROZ 2 $3.500"
-            const pricePattern = /\$[\d\.]+/g;
-            const qtyPattern = /(\d+)\s*(UN|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT)/i;
+            const skipWords = /^(TOTAL|SUBTOTAL|IVA|NETO|BOLETA|FACTURA|FACT|BOL|RUT|DIRECCION|DIREC|TELEFONO|TEL|FECHA|HORA|CAJA|CAJERO|VENDEDOR|SIRVASE|GRACIAS|VUELTO|EFECTIVO|TARJETA|DEBITO|CREDITO|VISA|MASTERCARD|AMEX|CRUDO|CONTADO|PAGO|CAMBIO|CODIGO|DESCRIPCION|PRECIO|CANT|UNIDAD|ITEM|NRO|NUM|ORIGEN|DOMICILIO|GIRO|RAZON|SOCIAL|FOLIO|TIMBRE|SII|AFIP|ORIGINAL|COPIA|NOTA|CREDITO|DEBITO| nc |nd |cierre|apertura|turno|operador|sucursal|local)/i;
+            const isNoise = /^\d{6,}$/; // Long barcodes like 7801234567890
+            const hasPrice = /\$[\s]*[\d\.\,]+/;
+            const priceClean = /[\$\.\,]/g;
 
             for (const line of lines) {
-                // Skip headers, footers, totals
-                if (/^(TOTAL|SUBTOTAL|IVA|NETO|BOLETA|FACTURA|RUT|DIRECCION|TELEFONO|FECHA|HORA|CAJA|CAJERO|VENDEDOR)/i.test(line)) continue;
-                if (line.length < 5) continue;
+                if (line.length < 4) continue;
+                if (skipWords.test(line)) continue;
+                if (isNoise.test(line.replace(/\s/g, ''))) continue;
+                if (!hasPrice.test(line)) continue;
 
-                const prices = line.match(pricePattern);
-                if (!prices || prices.length === 0) continue;
+                // Extract all prices from line
+                const prices = [];
+                const priceRegex = /\$[\s]*([\d\.]+)/g;
+                let pm;
+                while ((pm = priceRegex.exec(line)) !== null) {
+                    const val = parseInt(pm[1].replace(/\./g, ''));
+                    if (val > 0 && val < 5000000) prices.push(val);
+                }
+                if (prices.length === 0) continue;
 
-                // Try to find quantity
+                // Unit price is usually the last single price, or second-to-last if x2
+                const unitPrice = prices[prices.length - 1];
+
+                // Find quantity patterns: "X3", "2 UN", "3UN", just a number before name
                 let qty = 1;
-                const qtyMatch = line.match(qtyPattern);
-                if (qtyMatch) qty = parseInt(qtyMatch[1]);
+                const qtyPatterns = [
+                    /\bx(\d+)\b/i,           // X3, x2
+                    /\b(\d+)\s*(UN|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC|FARD|ROLLO|BOLSA|CAJA|ENVASE)\b/i,
+                    /^\s*(\d+)\s+[\w]/        // Starts with number: "2 ARROZ"
+                ];
+                for (const qp of qtyPatterns) {
+                    const qm = line.match(qp);
+                    if (qm) { qty = parseInt(qm[1]); break; }
+                }
 
-                // Get last price as unit price
-                const priceStr = prices[prices.length - 1].replace(/[$\.]/g, '');
-                const price = parseInt(priceStr);
-                if (price <= 0 || price > 1000000) continue;
-
-                // Get product name (remove prices, codes, quantities)
+                // Get product name: remove prices, barcodes (13+ digits), qty units, leading numbers
                 let name = line;
-                name = name.replace(/\$[\d\.]+/g, '').replace(/\b\d{4,}\b/g, '');
-                name = name.replace(/\b\d+\s*(UN|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT)\b/gi, '');
-                name = name.replace(/^\d+\s*[\-\|]\s*/, '');
-                name = name.replace(/[\-\|]+$/, '');
+                name = name.replace(/\$[\s]*[\d\.]+/g, '');        // Remove prices
+                name = name.replace(/\b\d{8,13}\b/g, '');          // Remove EAN/barcodes
+                name = name.replace(/\bx(\d+)\b/gi, '');           // Remove X3, x2
+                name = name.replace(/\b(\d+)\s*(UN|KG|LT|ML|GR|PAQ|CAJ|BOT|LAT|PZA|DOC)\b/gi, ''); // Remove qty+unit
+                name = name.replace(/^\s*\d+\s*[\-\|\/\*\.]?\s*/, ''); // Remove leading numbers (item number)
+                name = name.replace(/[\-\|\/\*\.]+\s*$/, '');      // Remove trailing separators
                 name = name.replace(/\s+/g, ' ').trim();
 
                 if (name.length < 2) continue;
-
-                // Limit name length
                 if (name.length > 80) name = name.substring(0, 80);
+
+                // Skip if name is just numbers
+                if (/^\d+$/.test(name)) continue;
 
                 facturaProducts.push({
                     name: name,
                     qty: qty,
-                    price: price,
+                    price: unitPrice,
                     selected: true
                 });
+            }
+
+            // Also try to detect lines with ":" pattern like "PRODUCTO: $2.500"
+            if (facturaProducts.length === 0) {
+                for (const line of lines) {
+                    if (!hasPrice.test(line)) continue;
+                    const parts = line.split(/[:;]/);
+                    if (parts.length >= 2) {
+                        const name = parts[0].replace(/^\d+\s*/, '').trim();
+                        const priceMatch = parts[1].match(/\$[\s]*([\d\.]+)/);
+                        if (name.length >= 2 && priceMatch) {
+                            const price = parseInt(priceMatch[1].replace(/\./g, ''));
+                            if (price > 0 && price < 5000000) {
+                                facturaProducts.push({
+                                    name: name.substring(0, 80),
+                                    qty: 1,
+                                    price: price,
+                                    selected: true
+                                });
+                            }
+                        }
+                    }
+                }
             }
 
             if (facturaProducts.length === 0) {
