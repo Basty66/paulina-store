@@ -54,6 +54,13 @@ async function initDatabase() {
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS product_scanned (
+                product_id INTEGER PRIMARY KEY,
+                scanned BOOLEAN DEFAULT false,
+                scanned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
         // Limpiar familias con codigos viejos (5 digitos) y re-insertar con 4 digitos
         await pool.query("DELETE FROM familias WHERE codigo LIKE '9%' OR codigo LIKE '1%'");
         const count = await pool.query('SELECT COUNT(*) FROM familias');
@@ -256,6 +263,31 @@ async function getHistoryByProduct(productId) {
     }
 }
 
+// ===== PRODUCT SCANNED =====
+async function getAllScanned() {
+    try {
+        const result = await pool.query('SELECT product_id, scanned FROM product_scanned');
+        return result.rows;
+    } catch (error) {
+        console.error('Error al obtener scanned:', error);
+        throw error;
+    }
+}
+
+async function setScanned(productId, scanned) {
+    try {
+        await pool.query(
+            `INSERT INTO product_scanned (product_id, scanned, scanned_at) VALUES ($1, $2, NOW())
+             ON CONFLICT (product_id) DO UPDATE SET scanned = $2, scanned_at = NOW()`,
+            [productId, scanned]
+        );
+        return true;
+    } catch (error) {
+        console.error('Error al guardar scanned:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     initDatabase,
     getProductos,
@@ -270,5 +302,7 @@ module.exports = {
     setReady,
     addHistory,
     getHistory,
-    getHistoryByProduct
+    getHistoryByProduct,
+    getAllScanned,
+    setScanned
 };

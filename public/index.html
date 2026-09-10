@@ -137,7 +137,10 @@
         .btn-outline:hover { background: var(--bg-elevated); color: var(--text-primary); }
         .btn-sm { padding: 4px 10px; font-size: 0.72rem; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); }
         .btn-sm:hover { background: var(--bg-elevated); }
-        .btn-sm.active { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-sm.active, .btn-sm.btn-outline.active { background: var(--accent) !important; color: white !important; border-color: var(--accent) !important; }
+        .bar-filter.active { background: var(--accent) !important; color: white !important; border-color: var(--accent) !important; }
+        .bar-product-item.scanned { border-left: 3px solid var(--accent); background: rgba(16,185,129,0.05); }
+        .bar-product-item.pending { border-left: 3px solid var(--danger); }
         .btn-icon {
             width: 36px; height: 36px; padding: 0; border-radius: var(--radius-sm);
             background: var(--bg-elevated); border: 1px solid var(--border);
@@ -1182,6 +1185,13 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5v14"/><path d="M8 5v14"/><path d="M12 5v14"/><path d="M17 5v14"/><path d="M21 5v14"/></svg>
                     Codigos de Barras
                 </h2>
+
+                <div style="display:flex;gap:8px;margin-bottom:12px;">
+                    <button class="btn btn-sm active bar-filter" onclick="barFilter('pendientes', this)" id="barFilterPendientes">Pendientes <span id="barCountPendientes" style="background:var(--danger);color:white;padding:1px 6px;border-radius:10px;font-size:0.65rem;margin-left:4px;">0</span></button>
+                    <button class="btn btn-sm btn-outline bar-filter" onclick="barFilter('escaneados', this)" id="barFilterEscaneados">Escaneados <span id="barCountEscaneados" style="background:var(--accent);color:white;padding:1px 6px;border-radius:10px;font-size:0.65rem;margin-left:4px;">0</span></button>
+                    <button class="btn btn-sm btn-outline bar-filter" onclick="barFilter('todos', this)">Todos</button>
+                </div>
+
                 <div class="card">
                     <div class="search-box">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1685,6 +1695,8 @@
     <script>
         const API_URL = '/api/productos';
         let products = [];
+        let scannedProducts = {};
+        let barCurrentFilter = 'pendientes';
         let selectedProduct = null;
         let html5QrCode = null;
         let scanCooldown = false;
@@ -1815,7 +1827,7 @@
             document.getElementById('tab-' + name).classList.add('active');
             btn.classList.add('active');
             if (name === 'productos') loadProductList();
-            if (name === 'barras') populateSelectBar();
+            if (name === 'barras') { populateSelectBar(); updateBarCounts(); }
             if (name === 'ganancias') renderGanancias();
             if (name === 'facturas') { document.getElementById('facturaResults').style.display = 'none'; }
             if (name === 'escaner') { populateSelectScan(); stopCamera(); }
@@ -1912,8 +1924,13 @@
             const list = document.getElementById('barProductList');
             const filtered = products.filter(p => {
                 if (!isProductReady(p.id)) return false;
+                const isScanned = scannedProducts[p.id] || false;
+                if (barCurrentFilter === 'escaneados' && !isScanned) return false;
+                if (barCurrentFilter === 'pendientes' && isScanned) return false;
                 return !search || p.descripcion.toLowerCase().includes(search) || p.codigo.includes(search);
             });
+
+            updateBarCounts();
 
             if (filtered.length === 0) {
                 list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.8rem;">No se encontraron productos</div>';
@@ -1922,12 +1939,19 @@
 
             list.innerHTML = filtered.map(p => {
                 const isSelected = selectedBarProductId == p.id;
-                return '<div class="bar-product-item' + (isSelected ? ' selected' : '') + '" onclick="selectBarProduct(' + p.id + ')">' +
+                const isScanned = scannedProducts[p.id] || false;
+                return '<div class="bar-product-item' + (isSelected ? ' selected' : '') + (isScanned ? ' scanned' : ' pending') + '" onclick="selectBarProduct(' + p.id + ')">' +
                     '<div class="bar-product-item-code">' + p.codigo + '</div>' +
-                    '<div class="bar-product-item-info">' +
+                    '<div class="bar-product-item-info" style="flex:1;">' +
                         '<div class="bar-product-item-name">' + p.descripcion + '</div>' +
                         '<div class="bar-product-item-price">$' + parseInt(p.precio_venta) + '</div>' +
                     '</div>' +
+                    '<button onclick="toggleScanned(' + p.id + ', event)" style="background:none;border:none;cursor:pointer;padding:4px;" title="' + (isScanned ? 'Marcar como pendiente' : 'Marcar como escaneado') + '">' +
+                        (isScanned ?
+                            '<svg viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" stroke-width="2" width="20" height="20"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01" fill="none" stroke="white" stroke-width="2"/></svg>' :
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/></svg>'
+                        ) +
+                    '</button>' +
                 '</div>';
             }).join('');
         }
@@ -2222,6 +2246,49 @@
 
         async function syncReadyFromServer() {
             // Ready status is now based on precio_compra > 0, no sync needed
+        }
+
+        async function loadScannedFromServer() {
+            try {
+                const r = await fetch('/api/scanned');
+                if (r.ok) {
+                    const data = await r.json();
+                    scannedProducts = {};
+                    data.forEach(s => { scannedProducts[s.product_id] = s.scanned; });
+                }
+            } catch(e) { console.error('Error loading scanned:', e); }
+        }
+
+        async function toggleScanned(productId, e) {
+            if (e) e.stopPropagation();
+            const current = scannedProducts[productId] || false;
+            const newState = !current;
+            scannedProducts[productId] = newState;
+            updateBarCounts();
+            filterBarProducts();
+
+            try {
+                await fetch('/api/scanned', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId, scanned: newState })
+                });
+            } catch(e) { console.error('Error saving scanned:', e); }
+        }
+
+        function barFilter(filter, btn) {
+            barCurrentFilter = filter;
+            document.querySelectorAll('.bar-filter').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            filterBarProducts();
+        }
+
+        function updateBarCounts() {
+            const allProducts = products.filter(p => isProductReady(p.id));
+            const escaneados = allProducts.filter(p => scannedProducts[p.id]).length;
+            const pendientes = allProducts.length - escaneados;
+            document.getElementById('barCountEscaneados').textContent = escaneados;
+            document.getElementById('barCountPendientes').textContent = pendientes;
         }
 
         async function syncReadyToServer() {
@@ -3950,6 +4017,7 @@
         }
 
         loadProducts();
+        loadScannedFromServer();
         loadFamilias();
     </script>
 </body>

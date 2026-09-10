@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto, getFamilias, addFamilia, updateFamilia, deleteFamilia, getAllReady, setReady, addHistory, getHistory, getHistoryByProduct } = require('./database');
+const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto, getFamilias, addFamilia, updateFamilia, deleteFamilia, getAllReady, setReady, addHistory, getHistory, getHistoryByProduct, getAllScanned, setScanned } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -132,6 +132,26 @@ app.get('/api/history/:productId', async (req, res) => {
         res.json(history);
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener historial' });
+    }
+});
+
+// ===== SCANNED API =====
+app.get('/api/scanned', async (req, res) => {
+    try {
+        const scanned = await getAllScanned();
+        res.json(scanned);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener escaneados' });
+    }
+});
+
+app.post('/api/scanned', async (req, res) => {
+    try {
+        const { productId, scanned } = req.body;
+        await setScanned(productId, scanned);
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al guardar escaneado' });
     }
 });
 
