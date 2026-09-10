@@ -38,6 +38,36 @@ async function initDatabase() {
                 fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+        // Insertar familias por defecto si la tabla esta vacia
+        const count = await pool.query('SELECT COUNT(*) FROM familias');
+        if (parseInt(count.rows[0].count) === 0) {
+            const defaults = [
+                ['90001', 'Alimentos Basicos'],
+                ['90002', 'Lacteos y Huevo'],
+                ['90003', 'Carnes y Aves'],
+                ['90004', 'Embutidos y Fiambres'],
+                ['90005', 'Pescados y Mariscos'],
+                ['90006', 'Frutas y Verduras'],
+                ['90007', 'Pan y Reposteria'],
+                ['90008', 'Bebidas sin Alcohol'],
+                ['90009', 'Bebidas Alcoholicas'],
+                ['90010', 'Cafe y Te'],
+                ['90011', 'Snacks y Dulces'],
+                ['90012', 'Congelados'],
+                ['90013', 'Conservas'],
+                ['90014', 'Limpieza'],
+                ['90015', 'Higiene Personal'],
+                ['90016', 'Farmacia'],
+                ['90017', 'Bebes'],
+                ['90018', 'Mascotas'],
+                ['90019', 'Tabaco'],
+                ['90020', 'Papeleria y Utensilios']
+            ];
+            for (const [codigo, nombre] of defaults) {
+                await pool.query('INSERT INTO familias (codigo, nombre, tipo) VALUES ($1, $2, $3) ON CONFLICT (codigo) DO NOTHING', [codigo, nombre, 'NO USA TECLA']);
+            }
+            console.log('Familias por defecto insertadas');
+        }
         console.log('Base de datos inicializada correctamente');
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
