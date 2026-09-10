@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto, getFamilias, addFamilia, updateFamilia, deleteFamilia, getAllReady, setReady } = require('./database');
+const { initDatabase, getProductos, addProducto, updateProducto, deleteProducto, getFamilias, addFamilia, updateFamilia, deleteFamilia, getAllReady, setReady, addHistory, getHistory, getHistoryByProduct } = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +24,7 @@ app.get('/api/productos', async (req, res) => {
 app.post('/api/productos', async (req, res) => {
     try {
         const nuevoProducto = await addProducto(req.body);
+        await addHistory(nuevoProducto.id, 'CREATE', nuevoProducto);
         res.status(201).json(nuevoProducto);
     } catch (error) {
         res.status(500).json({ error: 'Error al agregar producto' });
@@ -33,7 +34,9 @@ app.post('/api/productos', async (req, res) => {
 app.put('/api/productos/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        const before = (await getProductos()).find(p => p.id == id);
         const productoActualizado = await updateProducto(id, req.body);
+        await addHistory(id, 'UPDATE', { before, after: productoActualizado });
         res.json(productoActualizado);
     } catch (error) {
         res.status(500).json({ error: 'Error al actualizar producto' });
@@ -43,7 +46,9 @@ app.put('/api/productos/:id', async (req, res) => {
 app.delete('/api/productos/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        const before = (await getProductos()).find(p => p.id == id);
         await deleteProducto(id);
+        await addHistory(id, 'DELETE', before);
         res.json({ message: 'Producto eliminado correctamente' });
     } catch (error) {
         res.status(500).json({ error: 'Error al eliminar producto' });
@@ -106,6 +111,27 @@ app.post('/api/ready', async (req, res) => {
         res.json({ ok: true });
     } catch (error) {
         res.status(500).json({ error: 'Error al guardar ready' });
+    }
+});
+
+// ===== HISTORY API =====
+app.get('/api/history', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const history = await getHistory(limit);
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener historial' });
+    }
+});
+
+app.get('/api/history/:productId', async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const history = await getHistoryByProduct(productId);
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener historial' });
     }
 });
 

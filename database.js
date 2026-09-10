@@ -45,6 +45,15 @@ async function initDatabase() {
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS product_history (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER,
+                action VARCHAR(20) NOT NULL,
+                data JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
         // Limpiar familias con codigos viejos (5 digitos) y re-insertar con 4 digitos
         await pool.query("DELETE FROM familias WHERE codigo LIKE '9%' OR codigo LIKE '1%'");
         const count = await pool.query('SELECT COUNT(*) FROM familias');
@@ -207,6 +216,46 @@ async function setReady(productId, ready) {
     }
 }
 
+// ===== PRODUCT HISTORY =====
+async function addHistory(productId, action, data) {
+    try {
+        await pool.query(
+            'INSERT INTO product_history (product_id, action, data) VALUES ($1, $2, $3)',
+            [productId, action, JSON.stringify(data)]
+        );
+        return true;
+    } catch (error) {
+        console.error('Error al guardar historial:', error);
+        throw error;
+    }
+}
+
+async function getHistory(limit = 50) {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM product_history ORDER BY created_at DESC LIMIT $1',
+            [limit]
+        );
+        return result.rows;
+    } catch (error) {
+        console.error('Error al obtener historial:', error);
+        throw error;
+    }
+}
+
+async function getHistoryByProduct(productId) {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM product_history WHERE product_id = $1 ORDER BY created_at DESC',
+            [productId]
+        );
+        return result.rows;
+    } catch (error) {
+        console.error('Error al obtener historial:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     initDatabase,
     getProductos,
@@ -218,5 +267,8 @@ module.exports = {
     updateFamilia,
     deleteFamilia,
     getAllReady,
-    setReady
+    setReady,
+    addHistory,
+    getHistory,
+    getHistoryByProduct
 };
